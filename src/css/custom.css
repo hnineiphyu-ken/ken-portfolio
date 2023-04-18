@@ -8,11 +8,11 @@
     background: #03021f;
   }
   
-  /* header section */
+  /* header #home */
   header{
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: flex-end;
+    align-items: end;
     margin: 0 10% 0 10%;
   }
   
@@ -30,6 +30,8 @@
     color: white;
     text-shadow: 0 0 40px white;
   }
+
+
   
   .navbar a{
     display: inline-block;
@@ -54,14 +56,29 @@
     text-shadow: 0 0 40px #800080;
     /* text-shadow: 0 0 40px #9ee8ff; */
   }
-  
-  section{
+
+  .navbar-toggler:focus {
+      box-shadow: none !important;
+  }
+  .navbar{
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    width: 100%;
+  }
+
+  #home{
     margin: 5% 10%;
     display: flex;
     align-items: center;
   }
   
-  section h2{
+  #home h2{
     font-size: 2em;
     margin: 0 0 0 0;
     opacity: 0;
@@ -71,38 +88,38 @@
     transition: .5s;
   }
   
-  section h3,
-  section .personal-card{
+  #home h3,
+  #home .personal-card{
     opacity: 0;
     animation: slideRight 1s ease forwards;
     animation-delay: calc(.2s * var(--i))
   }
   
-  section p{
+  #home p{
     font-size: 0.9em;
     opacity: 0;
     animation: slideTop 1s ease forwards 1.8s;
   }
   
-  section img{
+  #home img{
     max-width: 300px;    
     max-height: 300px;
     opacity: 0;
     animation: slideTop 1s ease forwards 2s;
   }
   
-  section .img{
+  #home .img{
     animation: animate 5s ease-in-out infinite 3s;
   }
   
-  section span a{
+  #home span a{
       color: #800080;
       /* color: #0ef; */
     text-decoration: none;
     transition: .5s;
   }
   
-  section span a:hover{
+  #home span a:hover{
     text-shadow: 0 0 40px #fff;
     color: white;
   }
