@@ -375,6 +375,7 @@ to {transform: rotate(0deg);}
 
 .float-hover {
   position: fixed;
+  z-index: 1000;
 }
 
 .float-ul{
