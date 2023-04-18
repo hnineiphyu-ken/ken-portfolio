@@ -7,6 +7,92 @@
   body{
     background: #03021f;
   }
+
+  
+/* keyframes */
+  
+@keyframes slideBottom{
+  from{
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideTop{
+  from{
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight{
+  from{
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateX(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft{
+  from{
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateX(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes animate{
+  0%{
+    transform: translateY(0);
+  }
+  
+  50%{
+    transform: translateY(50px);
+  }
+  
+  100%{
+    transform: translateY(0);
+  }
+}
+
+
+@keyframes bot-to-top {
+0%   {bottom:-40px}
+50%  {bottom:40px}
+}
+
+@keyframes scale-in {
+from {transform: scale(0);opacity: 0;}
+to {transform: scale(1);opacity: 1;}
+}
+
+@keyframes rotate-in {
+from {transform: rotate(0deg);}
+to {transform: rotate(360deg);}
+}
+
+@keyframes rotate-out {
+from {transform: rotate(360deg);}
+to {transform: rotate(0deg);}
+}
   
   /* header #home */
   header{
@@ -89,7 +175,7 @@
   }
   
   #home h3,
-  #home .personal-card{
+  #about .personal-card{
     opacity: 0;
     animation: slideRight 1s ease forwards;
     animation-delay: calc(.2s * var(--i))
@@ -344,90 +430,4 @@
 }
 .my-float-sm{
 	font-size:12px;
-}
-
-
-/* keyframes */
-  
-@keyframes slideBottom{
-  from{
-    transform: translateY(-50px);
-    opacity: 0;
-  }
-  
-  to{
-    transform: translateY(0px);
-    opacity: 1;
-  }
-}
-
-@keyframes slideTop{
-  from{
-    transform: translateY(100px);
-    opacity: 0;
-  }
-  
-  to{
-    transform: translateY(0px);
-    opacity: 1;
-  }
-}
-
-@keyframes slideRight{
-  from{
-    transform: translateX(-100px);
-    opacity: 0;
-  }
-  
-  to{
-    transform: translateX(0px);
-    opacity: 1;
-  }
-}
-
-@keyframes slideLeft{
-  from{
-    transform: translateX(100px);
-    opacity: 0;
-  }
-  
-  to{
-    transform: translateX(0px);
-    opacity: 1;
-  }
-}
-
-@keyframes animate{
-  0%{
-    transform: translateY(0);
-  }
-  
-  50%{
-    transform: translateY(50px);
-  }
-  
-  100%{
-    transform: translateY(0);
-  }
-}
-
-
-@keyframes bot-to-top {
-0%   {bottom:-40px}
-50%  {bottom:40px}
-}
-
-@keyframes scale-in {
-from {transform: scale(0);opacity: 0;}
-to {transform: scale(1);opacity: 1;}
-}
-
-@keyframes rotate-in {
-from {transform: rotate(0deg);}
-to {transform: rotate(360deg);}
-}
-
-@keyframes rotate-out {
-from {transform: rotate(360deg);}
-to {transform: rotate(0deg);}
 }
