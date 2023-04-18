@@ -171,7 +171,7 @@
 
   /* personal card */
   .personal-card{
-    width: 300px;
+    width: 400px;
     height: 500px;
     margin: 50px auto;
     background-color: #ecf0f1;
@@ -303,4 +303,7 @@
     color: #800080;
     margin-top: 20px;
     font-weight: bold
+}
+.social-item {
+  cursor: pointer;
 }
