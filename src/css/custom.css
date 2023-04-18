@@ -281,7 +281,8 @@
     position: absolute;
     border: 20px solid transparent;
     border-top: 20px solid #800080;
-    left: 130px;
+    left: 44%;
+    /* left: 130px; */
     top: 150px
 }
 .top h3{
