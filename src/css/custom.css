@@ -71,7 +71,8 @@
     transition: .5s;
   }
   
-  section h3{
+  section h3,
+  section .personal-card{
     opacity: 0;
     animation: slideRight 1s ease forwards;
     animation-delay: calc(.2s * var(--i))
@@ -179,7 +180,7 @@
     position: relative;
     -webkit-transition: all 0.2s ease 0.4s;
     transition: all 0.2s ease 0.4s;
-    z-index: 1
+    z-index: 1;
 }
 .personal-card:before,
 .personal-card:after{
