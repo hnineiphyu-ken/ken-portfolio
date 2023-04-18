@@ -123,68 +123,6 @@
     text-shadow: 0 0 40px #fff;
     color: white;
   }
-  
-  @keyframes slideBottom{
-    from{
-      transform: translateY(-50px);
-      opacity: 0;
-    }
-    
-    to{
-      transform: translateY(0px);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slideTop{
-    from{
-      transform: translateY(100px);
-      opacity: 0;
-    }
-    
-    to{
-      transform: translateY(0px);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slideRight{
-    from{
-      transform: translateX(-100px);
-      opacity: 0;
-    }
-    
-    to{
-      transform: translateX(0px);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slideLeft{
-    from{
-      transform: translateX(100px);
-      opacity: 0;
-    }
-    
-    to{
-      transform: translateX(0px);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes animate{
-    0%{
-      transform: translateY(0);
-    }
-    
-    50%{
-      transform: translateY(50px);
-    }
-    
-    100%{
-      transform: translateY(0);
-    }
-  }
 
   /* personal card */
   .personal-card{
@@ -324,4 +262,172 @@
 }
 .social-item {
   cursor: pointer;
+}
+
+/* floating icon animation */
+/* floating button */
+
+.float{
+	position:fixed;
+	width:60px;
+	height:60px;
+	bottom:30px;
+	right:30px;
+	background-color:#800080;
+	color:#FFF;
+	border-radius:50px;
+	text-align:center;
+  box-shadow: 2px 2px 3px #000;
+	z-index:1000;
+	animation: bot-to-top 2s ease-out;
+}
+
+.float .my-float{
+	animation: rotate-in 0.5s;
+  cursor: pointer;
+}
+
+.float-hover {
+  position: fixed;
+}
+
+.float-ul{
+	position:fixed;
+	right:40px;
+	bottom:70px;
+	z-index:100;
+  visibility: hidden;
+}
+
+.float-ul li{
+	list-style:none;
+  vertical-align: baseline !important;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+.float-ul li a{
+  background-color: #800080;
+  text-transform: uppercase;
+  font-size: 11px !important;
+  letter-spacing: 0.1em;
+  font-weight: 300;
+  color: #FFF;
+  border-radius: 4px;
+  text-align: center;
+  width: 212px;
+  height: 35px !important;
+  display: block;
+  padding: 6px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.float-ul:hover{
+	visibility:visible!important;
+	opacity:1!important;
+}
+
+.float-hover:hover .float-ul{
+  visibility: visible;
+  animation: scale-in 0.5s;
+}
+
+.float:hover .my-float{
+	animation: rotate-out 0.5s;
+}
+
+.my-float{
+	font-size:24px !important;
+	margin-top:18px !important;
+}
+.my-float-sm{
+	font-size:12px;
+}
+
+
+/* keyframes */
+  
+@keyframes slideBottom{
+  from{
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideTop{
+  from{
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRight{
+  from{
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateX(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeft{
+  from{
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  
+  to{
+    transform: translateX(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes animate{
+  0%{
+    transform: translateY(0);
+  }
+  
+  50%{
+    transform: translateY(50px);
+  }
+  
+  100%{
+    transform: translateY(0);
+  }
+}
+
+
+@keyframes bot-to-top {
+0%   {bottom:-40px}
+50%  {bottom:40px}
+}
+
+@keyframes scale-in {
+from {transform: scale(0);opacity: 0;}
+to {transform: scale(1);opacity: 1;}
+}
+
+@keyframes rotate-in {
+from {transform: rotate(0deg);}
+to {transform: rotate(360deg);}
+}
+
+@keyframes rotate-out {
+from {transform: rotate(360deg);}
+to {transform: rotate(0deg);}
 }
