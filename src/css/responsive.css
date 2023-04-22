@@ -1,5 +1,24 @@
 @media screen and (max-width: 992px) {
-    #home .img img{
+    #home .img img {
         display: none !important;
+    }
+  }
+
+  @media screen and (min-width: 769px) {
+    #about .profile-img img {
+        width: 420px !important;
+        height: 510px !important;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    #about .profile-img img {
+        display: none !important;
+    }
+    #about .personal-card {
+        width: 100% !important;
+        /* height: auto !important; */
+        padding-bottom: 3px !important;
+        margin: 0px !important;
     }
   }

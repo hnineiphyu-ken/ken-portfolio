@@ -159,6 +159,7 @@ to {transform: rotate(0deg);}
   }
 
   #home{
+    height: 70vh;
     margin: 5% 10%;
     display: flex;
     align-items: center;
@@ -176,6 +177,12 @@ to {transform: rotate(0deg);}
   
   #home h3,
   #about .personal-card{
+    opacity: 0;
+    animation: slideLeft 1s ease forwards;
+    animation-delay: calc(.2s * var(--i))
+  }
+    
+  #about .profile-img{
     opacity: 0;
     animation: slideRight 1s ease forwards;
     animation-delay: calc(.2s * var(--i))
@@ -211,10 +218,18 @@ to {transform: rotate(0deg);}
   }
 
   /* personal card */
+  #about {
+    margin: 5% 15%;
+  }
+
+  .profile-img {
+    margin-right: 15%;
+  }
+
   .personal-card{
-    width: 400px;
-    height: 500px;
-    margin: 50px auto;
+    width: 420px;
+    height: 510px;
+    /* margin: 50px 0px; */
     background-color: #ecf0f1;
     text-align: center;
     color: #800080;
@@ -350,9 +365,30 @@ to {transform: rotate(0deg);}
   cursor: pointer;
 }
 
+/* skills section */
+.skill-div {
+  width: 132px;
+  height: 132px;
+  background-color: #ffffff69;
+  border-radius: 50%;
+  position: relative;
+}
+
+.skill-img {
+  width: 100px;
+  position: absolute;
+  top: 16%;
+  left: 11%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.skill-text {
+  padding-left: 10%;
+}
+
 /* floating icon animation */
 /* floating button */
-
 .float{
 	position:fixed;
 	width:60px;
