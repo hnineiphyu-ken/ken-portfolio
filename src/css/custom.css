@@ -117,8 +117,22 @@ to {transform: rotate(0deg);}
     text-shadow: 0 0 40px white;
   }
 
-
+  .color-1 {
+    color: #800080 !important;
+  }
   
+  .bg-1 {
+    background-color: #800080 !important;
+  }
+
+  .hov-1:hover {
+    color: #800080 !important;
+  }
+
+  .hov-bg-1:hover {
+    background-color: #800080 !important;
+  }
+
   .navbar a{
     display: inline-block;
     color: #9f80cf;
@@ -364,6 +378,9 @@ to {transform: rotate(0deg);}
 .social-item {
   cursor: pointer;
 }
+.social-item[src='src/images/social/link.png'] {
+  padding: 5px;
+}
 
 /* skills section */
 .skill-div {
@@ -385,6 +402,86 @@ to {transform: rotate(0deg);}
 
 .skill-text {
   padding-left: 10%;
+}
+
+/* projects section */
+.dd_heading{
+  text-align: center;
+  font-family: roboto thin;
+}
+
+.page-content {
+  display: grid;
+  grid-gap: 1rem;
+  padding: 1rem;
+  max-width: 1024px;
+  margin: 0 auto;
+  font-family: var(--font-sans);
+}
+
+/* contact section */
+.copyright {
+  padding: 2rem 0 0 0;
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--color-3);
+  text-align: center;
+  border-top: 1px solid var(--color-3);
+}
+
+.footer-nav{
+    padding: 1rem 0
+}
+
+.footer-nav .col {
+  max-width: 300px;
+}
+
+p.site-decription {
+  color: var(--color-3);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.social-medias a {
+  background-color: #ffffffb1;
+  color: var(--color-2);
+  width: 3rem;
+  height: 3em;
+  border: 2px solid var(--color-2);
+  border-radius: 50%;
+}
+
+/* .social-medias img {
+  vertical-align: middle;
+  width: 1.5rem;
+  height: 1.5rem;
+} */
+
+.flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-start{
+  align-items: flex-start;
+}
+
+.flex-jc-start{
+  justify-content: flex-start;
+}
+
+.flex-around{
+  justify-content: space-around;
+}
+
+.flex-column{
+  flex-direction: column;
+}
+
+.flex-g-1{
+  gap: 1rem;
 }
 
 /* floating icon animation */
