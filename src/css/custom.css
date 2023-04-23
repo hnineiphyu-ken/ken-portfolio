@@ -179,14 +179,15 @@ to {transform: rotate(0deg);}
     align-items: center;
   }
   
-  #home h2{
-    font-size: 2em;
+  #home h2 a{
+    font-size: 1.3em;
     margin: 0 0 0 0;
     opacity: 0;
     animation: slideLeft 1s ease forwards 1.4s;
     -webkit-text-stroke: 2px white;
     color: transparent;
     transition: .5s;
+    cursor: pointer;
   }
   
   #home h3,
