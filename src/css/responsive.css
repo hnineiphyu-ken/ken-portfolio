@@ -8,6 +8,8 @@
     #about .profile-img img {
         width: 420px !important;
         height: 510px !important;
+        object-fit: cover;
+        object-position: center;
     }
   }
 
