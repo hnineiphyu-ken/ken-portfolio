@@ -247,7 +247,7 @@ to {transform: rotate(0deg);}
   }
   
   .card h2 {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   /* MEDIA */
@@ -266,10 +266,9 @@ to {transform: rotate(0deg);}
   }
   
   #home h3,
-  #about .personal-card{
+  #about .card{
     opacity: 0;
-    animation: slideLeft 1s ease forwards;
-    animation-delay: calc(.2s * var(--i))
+    animation: slideLeft 1s ease forwards 2s;
   }
     
   #about .profile-img{
@@ -314,6 +313,10 @@ to {transform: rotate(0deg);}
 
   .profile-img {
     margin-right: 15%;
+  }
+
+  .profile-img img {
+    border-radius: 5%;
   }
 
   .personal-card{
@@ -460,18 +463,18 @@ to {transform: rotate(0deg);}
 
 /* skills section */
 .skill-div {
-  width: 132px;
-  height: 132px;
+  width: 115px;
+  height: 115px;
   background-color: #ffffff69;
   border-radius: 50%;
   position: relative;
 }
 
 .skill-img {
-  width: 100px;
+  width: 70px;
   position: absolute;
-  top: 16%;
-  left: 11%;
+  top: 18%;
+  left: 18%;
   object-fit: cover;
   object-position: center;
 }
