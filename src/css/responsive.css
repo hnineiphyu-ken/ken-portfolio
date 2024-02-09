@@ -132,7 +132,7 @@
       -webkit-transform calc(var(--d) * 2) var(--e);
   }
   .d_card:before {
-    background-image: url('../images/projects.jpg');
+    background-image: url('../images/projects_1.jpg');
   }
   /* .d_card:nth-child(2):before {
     background-image: url(https://images.unsplash.com/photo-1581014023865-4209099f2b71?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2734&q=80);
