@@ -1,44 +1,628 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Nothing is impossible. Credit to own developer.">
+    <meta name="author" content="Ken Nebula">
+    <!-- author => Devcrud -->
     <title>HninEi Phyu</title>
     <!-- favicon -->
-    <link rel="icon" type="image/x-icon" href="src/images/favicon.png">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="src/css/bootstrap.min.css">
-    <link rel="stylesheet" href="src/font/css/all.min.css">
-    <link rel="stylesheet" href="src/style.css">
-    
+    <link rel="icon" type="image/x-icon" href="assets/imgs/favicon.png">
+    <!-- font icons -->
+    <link rel="stylesheet" href="assets/vendors/themify-icons/css/themify-icons.css">
+    <!-- Bootstrap + Meyawo main styles -->
+	<link rel="stylesheet" href="assets/css/ken.css">
+	<link rel="stylesheet" href="assets/css/meyawo.css">
 </head>
+<body data-spy="scroll" data-target=".navbar" data-offset="40" id="home">
 
-<body>
-    <!-- header -->
-    <section id="header">
-        <ul class="nav justify-content-center">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Active</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-            </li>
-          </ul>
+    <!-- Page Navbar -->
+    <nav class="custom-navbar" data-spy="affix" data-offset-top="20">
+        <div class="container">
+            <a class="logo" href="#">HninEi Phyu</a>         
+            <ul class="nav">
+                <li class="item">
+                    <a class="link" href="#home">Home</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="#about">About</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="#projects">Projects</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="#skills">Skills</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="#blog">Blog</a>
+                </li>
+                <!-- <li class="item">
+                    <a class="link" href="#contact">Contact</a>
+                </li> -->
+            </ul>
+            <a href="javascript:void(0)" id="nav-toggle" class="hamburger hamburger--elastic">
+                <div class="hamburger-box">
+                  <div class="hamburger-inner"></div>
+                </div>
+            </a>
+        </div>          
+    </nav><!-- End of Page Navbar -->
+
+    <!-- page header -->
+    <header id="home" class="header">
+        <div class="overlay"></div>
+        <div class="header-content container">
+            <h1 class="header-title">
+                <span class="up">HI!</span>
+                <span class="down">I am HninEi Phyu</span>
+            </h1>
+            <p class="header-subtitle">WEB DEVELOPER</p>            
+
+            <!-- <button class="btn btn-primary">Download Resume</button> -->
+        </div>              
+    </header><!-- end of page header -->
+
+    <!-- about section -->
+    <section class="section pt-0" id="about">
+        <!-- container -->
+        <div class="container text-center">
+            <!-- about wrapper -->
+            <div class="about">
+                <div class="about-img-holder">
+                    <img src="assets/imgs/hnineiphyu-profile-bg-w-resize.png" class="about-img" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">
+                </div>
+                <div class="about-caption">
+                    <p class="section-subtitle">Who Am I ?</p>
+                    <h2 class="section-title mb-3">About Me</h2>
+                    <p>
+                        I graduated from the University of Computer Studies, Magway, Myanmar. Initially, I worked as a mentor and junior web developer in 2020. Nowadays, I hold the position of Senior Web Developer and can manage a team. I have extensive experience in Customize System Management, Content Management System, and Ecommerce System.             
+                    </p>
+                    <a href="assets/file/HninEiPhyu_CV_Resume_P_2024.pdf" target="_blank" class="btn-rounded btn btn-outline-primary mt-4">Download CV</a>
+                </div>              
+            </div>
+        </div>
+    </section> 
+    <!-- end of about section -->
+
+    <!-- projects section -->
+    <section class="section" id="projects">
+        <div class="container text-center">
+            <p class="section-subtitle">What I Did ?</p>
+            <h6 class="section-title mb-6">Projects</h6>
+            <!-- row -->
+            <div class="row">
+                <div class="col-md-4 my-1">
+                    <a href="https://yoonskin.com.mm/" target="_blank" class="portfolio-card">
+                        <img src="assets/imgs/projects/yoonskin.png" class="portfolio-card-img" alt="yoonskin">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Yoon Skin</h5>
+                                <p class="font-weight-normal">Category: Online Shopping</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="https://lotayacare.com/" target="_blank" class="portfolio-card">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/latayacare.png" class="img-responsive rounded" alt="lotayacare">
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Lotaya Care</h5>
+                                <p class="font-weight-normal">Category: Online Shopping</p>
+                            </span>                         
+                        </span>                         
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="https://bethany.com.mm/" target="_blank" class="portfolio-card">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/bethany.png" class="img-responsive rounded" alt="bethany">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Bethany</h5>
+                                <p class="font-weight-normal">Category: Job Agency</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="https://www.freshtonemyanmar.com/" target="_blank" class="portfolio-card">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/freshtone.png" class="img-responsive rounded" alt="freshtone">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>FreshTone</h5>
+                                <p class="font-weight-normal">Category: Online Shopping</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="https://kokyargyijadeandjewellery.com/" target="_blank" class="portfolio-card">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/kokyargyee.png" class="img-responsive rounded" alt="kokyargyee">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Ko Kyar Gyee</h5>
+                                <p class="font-weight-normal">Category: Online Shopping</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="javascript:void(0)" class="portfolio-card"  data-toggle="modal" data-target="#hrSystemHmm">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/hr-system-hmm.png" class="img-responsive rounded" alt="hr-system-hmm">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>HR Management</h5>
+                                <p class="font-weight-normal">Category: System Management</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="javascript:void(0)" class="portfolio-card"  data-toggle="modal" data-target="#myProject">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/streamline.png" class="img-responsive rounded" alt="streamline">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Streamline</h5>
+                                <p class="font-weight-normal">Category: Student Management</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="javascript:void(0)" class="portfolio-card"  data-toggle="modal" data-target="#myProject">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/lms.png" class="img-responsive rounded" alt="lms">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>LMS</h5>
+                                <p class="font-weight-normal">Category: Learning Management</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+                <div class="col-md-4 my-1">
+                    <a href="javascript:void(0)" class="portfolio-card"  data-toggle="modal" data-target="#myProject">
+                        <img class="portfolio-card-img" src="assets/imgs/projects/grandwinner.png" class="img-responsive rounded" alt="grandwinner.png">    
+                        <span class="portfolio-card-overlay">
+                            <span class="portfolio-card-caption">
+                                <h4>Grand Winner Printing</h5>
+                                <p class="font-weight-normal">Category: Accounting and Printing Management</p>
+                            </span>                         
+                        </span>                     
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section> 
+    <!-- The Modal -->
+    <div class="modal" id="hrSystemHmm">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h4 class="modal-title">HR Management</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="paragraph">
+                    In this HR management system project for a factory with at least one thousand employees, the administrator has the capability to add roles and assign staff members to handle specific roles and permissions within the application.
+                </p>
+                <p class="paragraph">
+                    Employees can be added with their respective designations and groups. Subsequently, timetables can be defined for each group, allowing for the rotation of day and night shifts. Attendance for each employee can be recorded either through the application form or by importing data in Excel format. Furthermore, administrators can check the attendance and timetables of each employee.
+                </p>
+                <p class="paragraph">
+                    Users with permission to generate invoices for each employee can add, edit, and manage invoices for individual employees, as well as print or download a zip file containing the invoices. Additionally, they can add details such as loans, deductions (e.g., late fines, missing fingerprint fines), and home rent listings for employees. They can also log the history of employee or group mistakes, both with and without associated fines.
+                </p>
+            </div>
+        </div>
+        </div>
+    </div>
+    <div class="modal" id="myProject">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h4 class="modal-title">System Management</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="paragraph">
+                    The explaination will be coming soon.
+                </p>
+            </div>
+        </div>
+        </div>
+    </div>
+    <!-- end of portfolio section -->
+
+    <!-- skills section -->
+    <section class="section" id="skills">
+        <div class="container text-center">
+            <p class="section-subtitle">What I Do ?</p>
+            <h6 class="section-title mb-6">Skills</h6>
+            <div class="row">
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/laravel.ico" alt="laravel" class="icon">
+                            <h6 class="title">Laravel</h6>
+                            <p class="subtitle">Developing websites, web application and APIs for third party</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/php.png" alt="php" class="icon">
+                            <h6 class="title">PHP</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/javascript.png" alt="javascript" class="icon">
+                            <h6 class="title">Javascript</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/jquery.ico" alt="jquery" class="icon">
+                            <h6 class="title">Jquery</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/html.ico" alt="html" class="icon">
+                            <h6 class="title">HTML</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/css.png" alt="css" class="icon">
+                            <h6 class="title">CSS</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/bootstrap.png" alt="bootstrap" class="icon">
+                            <h6 class="title">Bootstrap</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/mysql.png" alt="mysql" class="icon">
+                            <h6 class="title">MySQL</h6>
+                            <p class="subtitle">Implementing database structure while developing web application and websites.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/vue.ico" alt="vue" class="icon">
+                            <h6 class="title">Vue</h6>
+                            <p class="subtitle">Developing websites, web application.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/codeigniter.ico" alt="codeigniter" class="icon">
+                            <h6 class="title">CodeIgniter</h6>
+                            <p class="subtitle">Learning codeigniter as a beginner.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/wordpress.ico" alt="wordpress" class="icon">
+                            <h6 class="title">Wordpress</h6>
+                            <p class="subtitle">Learning wordpress as a beginner.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 my-1">
+                    <div class="service-card">
+                        <div class="body">
+                            <img src="assets/imgs/skills/java.ico" alt="java" class="icon">
+                            <h6 class="title">Java</h6>
+                            <p class="subtitle">Learning java as a beginner.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
+    <!-- end of service section -->
+    <!-- soft skills section -->
+    <section class="section" id="soft_skills">
+        <div class="container text-center">
+            <p class="section-subtitle">What is my personality?</p>
+            <h6 class="section-title mb-6">Soft Skills</h6>
+            <div class="row">
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Communication : </small> <small>85%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 85%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Problem Solving : </small> <small>80%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Leadership : </small><small>80%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Motivation : </small><small>90%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 90%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Teamwork : </small><small>85%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 85%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Time Management : </small><small>80%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Flexibility : </small><small>90%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 90%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-lg-6 my-1">
+                    <div class="d-flex justify-content-between"><small>Creativity : </small><small>75%</small></div>
+                    <div class="progress mt-2 mb-3">
+                       <div class="progress-bar" role="progressbar" style="width: 75%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- end of service section -->
 
-    <!-- JS -->
-    <script type="text/javascript" src="src/js/jquery-3.6.4.min.js"></script>
-    <script type="text/javascript" src="src/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="src/font/js/all.min.js"></script>
+    <!-- pricing section -->
+    <!-- <section class="section" id="pricing">
+        <div class="container text-center">
+            <p class="section-subtitle">How Much I Charge ?</p>
+            <h6 class="section-title mb-6">My Pricing</h6>
+            <div class="pricing-wrapper">
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <img class="pricing-card-icon" src="assets/imgs/scooter.svg" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">
+                    </div>
+                    <div class="pricing-card-body">
+                        <h6 class="pricing-card-title">Free</h6>
+                        <div class="pricing-card-list">
+                            <p>accusamus reprehenderit</p>
+                            <p>provident dolorem </p>
+                            <p>quos neque</p>
+                            <p>fugiat quibusdam</p>
+                            <p><i class="ti-close"></i></p>
+                            <p><i class="ti-close"></i></p>
+                        </div>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <span>$</span>
+                        <span>0.00/Month</span>
+                    </div>
+                    <a href="#" class="btn btn-primary mt-3 pricing-card-btn">Subscribe</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <img class="pricing-card-icon" src="assets/imgs/shipped.svg" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">
+                    </div>
+                    <div class="pricing-card-body">
+                        <h6 class="pricing-card-title">Basic</h6>
+                        <div class="pricing-card-list">
+                            <p>accusamus reprehenderit</p>
+                            <p>provident dolorem </p>
+                            <p>quos neque</p>
+                            <p>fugiat quibusdam</p>
+                            <p>accusamus laboriosam</p>
+                            <p><i class="ti-close"></i></p>
+                        </div>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <span>$</span>
+                        <span>9.99/Month</span>
+                    </div>
+                    <a href="#" class="btn btn-primary mt-3 pricing-card-btn">Subscribe</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <img class="pricing-card-icon" src="assets/imgs/startup.svg" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">
+                    </div>
+                    <div class="pricing-card-body">
+                        <h6 class="pricing-card-title">Premium</h6>
+                        <div class="pricing-card-list">
+                            <p>accusamus reprehenderit</p>
+                            <p>provident dolorem </p>
+                            <p>quos neque</p>
+                            <p>fugiat quibusdam</p>
+                            <p>accusamus laboriosam</p>
+                            <p>inventore omnis</p>
+                        </div>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <span>$</span>
+                        <span>99.9/Month</span>
+                    </div>
+                    <a href="#" class="btn btn-primary mt-3 pricing-card-btn">Subscribe</a>
+                </div>
+
+            </div>
+        </div> 
+    </section> -->
+    <!-- end of pricing section -->
+
+    <!-- hire me section --> 
+    <!-- <section class="section-sm bg-primary">
+        <div class="container text-center text-sm-left">
+            <div class="row align-items-center">
+                <div class="col-sm offset-md-1 mb-4 mb-md-0">
+                    <h6 class="title text-light">Want to work with me?</h6>
+                    <p class="m-0 text-light">Always feel Free to Contact & Hire me</p>
+                </div>
+                <div class="col-sm offset-sm-2 offset-md-3">
+                    <button class="btn btn-lg my-font btn-light rounded">Hire Me</button>
+                </div>
+            </div> 
+        </div> 
+    </section>  -->
+    <!-- end of section -->
+
+    <!-- testimonial section -->
+    <!-- <section class="section" id="testmonial">
+        <div class="container text-center">
+            <p class="section-subtitle">What Think Client About Me ?</p>
+            <h6 class="section-title mb-6">Testmonial</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <div class="testimonial-card-img-holder">
+                            <img src="assets/imgs/avatar2.jpg" class="testimonial-card-img" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">                           
+                        </div>
+                        <div class="testimonial-card-body">
+                            <p class="testimonial-card-subtitle">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eaque doloribus autem aperiam earum nostrum omnis blanditiis corporis perspiciatis adipisci nihil.</p>
+                            <h6 class="testimonial-card-title">Emily Reb</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <div class="testimonial-card-img-holder">
+                            <img src="assets/imgs/avatar3.jpg" class="testimonial-card-img" alt="Download free bootstrap 4 landing page, free boootstrap 4 templates, Download free bootstrap 4.1 landing page, free boootstrap 4.1.1 templates, meyawo Landing page">                        
+                        </div>
+                        <div class="testimonial-card-body">
+                            <p class="testimonial-card-subtitle">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eaque doloribus autem aperiam earum nostrum omnis blanditiis corporis perspiciatis adipisci nihil.</p>
+                            <h6 class="testimonial-card-title">Emily Reb</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </section>  -->
+    <!-- end of testimonial section -->
+    
+    <!-- blog section -->
+    <section class="section" id="blog">
+        <div class="container text-center">
+            <p class="section-subtitle">Recent Posts?</p>
+            <h6 class="section-title mb-6">Blog</h6> 
+            <div class="blog-card">
+                <div class="blog-card-header">
+                    <img src="assets/imgs/blogs/github-deploy-to-server.png" class="blog-card-img" alt="github-deploy-to-server">
+                </div>
+                <div class="blog-card-body">
+                    <h5 class="blog-card-title">How to deploy your portfolio website on github.io.</h6>
+                    <p class="blog-card-caption">
+                        <a href="#">By: Ken Nebula</a>
+                        <a href="#"><i class="ti-heart text-danger"></i> 234</a>
+                        <a href="#"><i class="ti-comment"></i> 123</a>
+                    </p>
+                    <p>This is step by step explaination to deploy portfolio website on github server in Linked.</p>
+                    <a href="https://www.linkedin.com/posts/hnineiphyu-kennebula_how-to-publish-your-portfolio-on-github-junior-activity-7111967699060084736-kuRb?utm_source=share&utm_medium=member_android" target="_blank" class="blog-card-link">Read more <i class="ti-angle-double-right"></i></a>
+                </div>
+            </div>
+
+            <div class="blog-card">
+                <div class="blog-card-header">
+                    <img src="assets/imgs/blogs/html-elements.png" class="blog-card-img" alt="html-elements">
+                </div>
+                <div class="blog-card-body">
+                    <h5 class="blog-card-title">Basic elements of HTML.</h6>
+                    <p class="blog-card-caption">
+                        <a href="#">By: Ken Nebula</a>
+                        <a href="#"><i class="ti-heart text-danger"></i> 456</a>
+                        <a href="#"><i class="ti-comment"></i> 264</a>
+                    </p>
+                    <p>This blog is shown with basic HTML elements.</p>
+                    <a href="https://www.linkedin.com/posts/hnineiphyu-kennebula_spec-zoneru-activity-7053748308413988864-YWGa?utm_source=share&utm_medium=member_android" target="_blank" class="blog-card-link">Read more <i class="ti-angle-double-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- end of blog section -->
+
+    <!-- contact section -->
+    <!-- <section class="section" id="contact">
+        <div class="container text-center">
+            <p class="section-subtitle">How can you communicate?</p>
+            <h6 class="section-title mb-5">Contact Me</h6>
+            <form action="" class="contact-form col-md-10 col-lg-8 m-auto">
+                <div class="form-row">
+                    <div class="form-group col-sm-6">
+                        <input type="text" size="50" class="form-control" placeholder="Your Name" required>                 
+                    </div>
+                    <div class="form-group col-sm-6">
+                        <input type="email" class="form-control" placeholder="Enter Email"requried>                 
+                    </div>
+                    <div class="form-group col-sm-12">
+                        <textarea name="comment" id="comment" rows="6"   class="form-control" placeholder="Write Something"></textarea>
+                    </div>
+                    <div class="form-group col-sm-12 mt-3">
+                        <input type="submit" value="Send Message" class="btn btn-outline-primary rounded">                  
+                    </div>
+                </div>  
+            </form>
+        </div>
+    </section> -->
+    <!-- end of contact section -->
+
+    <!-- footer -->
+    <div class="container">
+        <footer class="footer">       
+            <p class="mb-0">HninEi Phyu</p>
+            <div class="social-links text-right m-auto ml-sm-auto">
+                <a href="https://www.facebook.com/hninei.yuki.10050511" target="_blank" class="link"><i class="ti-facebook"></i></a>
+                <a href="tel:+959797809783" class="link"><i class="ti-headphone-alt"></i></a>
+                <a href="mailto:hnineiphyucu@gmail.com" class="link"><i class="ti-email"></i></a>
+                <a href="https://www.linkedin.com/in/hninei-phyu-3aa5a61b3" target="_blank" class="link"><i class="ti-linkedin"></i></a>
+                <a href="https://www.instagram.com/ken_nebula" target="_blank" class="link"><i class="ti-instagram"></i></a>
+                <a href="https://github.com/hnineiphyu-ken" target="_blank" class="link"><i class="ti-github"></i></a>
+            </div>
+        </footer>
+    </div> <!-- end of page footer -->
+	
+	<!-- core  -->
+    <script src="assets/vendors/jquery/jquery-3.4.1.js"></script>
+    <script src="assets/vendors/bootstrap/bootstrap.bundle.js"></script>
+
+    <!-- bootstrap 3 affix -->
+	<script src="assets/vendors/bootstrap/bootstrap.affix.js"></script>
+
+    <!-- Meyawo js -->
+    <script src="assets/js/meyawo.js"></script>
+
 </body>
-
 </html>
