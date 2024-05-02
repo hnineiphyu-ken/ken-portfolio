@@ -1,0 +1,11 @@
+@font-face {
+    font-family: "Slabo";
+    src: url('kenFont/Slabo27px-Regular.ttf');
+}
+
+*, .nav-link{
+    font-family: "Slabo" !important;
+    color: #000000 !important;
+    cursor: default !important;
+}
+

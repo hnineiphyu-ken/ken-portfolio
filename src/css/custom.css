@@ -486,7 +486,7 @@ to {transform: rotate(0deg);}
 /* projects section */
 .dd_heading{
   text-align: center;
-  font-family: roboto thin;
+  font-family: "Arial Black", sans-serif;
 }
 
 .page-content {
@@ -495,7 +495,7 @@ to {transform: rotate(0deg);}
   padding: 1rem;
   max-width: 1024px;
   margin: 0 auto;
-  font-family: var(--font-sans);
+  font-family: "Arial Black", sans-serif;
 }
 
 /* contact section */
