@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Laptop SVG Profile Card</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@500;700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg: #f4f1e8;
+			--panel: #fffdfa;
+			--ink: #1f2937;
+			--accent: #146c94;
+			--accent-2: #f97316;
+			--line: #d7d0bf;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Space Grotesk", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 85% 10%, #ffd8bf 0 18%, transparent 19%),
+				radial-gradient(circle at 8% 85%, #bde3f0 0 18%, transparent 19%),
+				linear-gradient(160deg, #fff8eb 0%, #f4f1e8 48%, #f1efe6 100%);
+			display: grid;
+			place-items: center;
+			padding: 24px;
+		}
+
+		.page {
+			width: min(1080px, 100%);
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 20px;
+			overflow: hidden;
+			box-shadow: 0 20px 45px rgba(20, 26, 37, 0.12);
+			display: grid;
+			grid-template-columns: 320px 1fr;
+		}
+
+		.control-pane {
+			padding: 26px;
+			background:
+				linear-gradient(180deg, #fcf2e6 0%, #f8efe2 100%);
+			border-right: 1px solid var(--line);
+		}
+
+		.control-title {
+			margin: 0 0 8px;
+			font-family: "Sora", sans-serif;
+			font-size: 1.2rem;
+		}
+
+		.control-note {
+			margin: 0 0 22px;
+			font-size: 0.93rem;
+			line-height: 1.5;
+			color: #4b5563;
+		}
+
+		.input-group {
+			margin-bottom: 16px;
+		}
+
+		label {
+			display: block;
+			font-size: 0.88rem;
+			margin-bottom: 8px;
+			font-weight: 600;
+		}
+
+		input[type="text"] {
+			width: 100%;
+			border: 1px solid #c9c2b2;
+			border-radius: 10px;
+			padding: 12px 14px;
+			font-size: 0.95rem;
+			font-family: inherit;
+			background: #fff;
+		}
+
+		input[type="text"]:focus {
+			border-color: var(--accent);
+			box-shadow: 0 0 0 3px rgba(20, 108, 148, 0.15);
+			outline: none;
+		}
+
+		.btn-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-top: 18px;
+		}
+
+		button {
+			flex: 1 1 120px;
+			min-width: 0;
+			border: 0;
+			border-radius: 10px;
+			padding: 11px 14px;
+			font-family: inherit;
+			font-size: 0.9rem;
+			cursor: pointer;
+			transition: transform 0.18s ease, box-shadow 0.18s ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 15px rgba(31, 41, 55, 0.14);
+		}
+
+		.btn-primary {
+			background: var(--accent);
+			color: #fff;
+		}
+
+		.btn-secondary {
+			background: var(--accent-2);
+			color: #fff;
+		}
+
+		.btn-gif {
+			background: #5b21b6;
+			color: #fff;
+		}
+
+		.preview-pane {
+			padding: 28px;
+		}
+
+		.preview-title {
+			margin: 0 0 14px;
+			font-family: "Sora", sans-serif;
+			font-size: 1.05rem;
+		}
+
+		.svg-shell {
+			width: 100%;
+			border: 1px solid var(--line);
+			border-radius: 14px;
+			padding: 12px;
+			background: #fffcf7;
+			animation: fade-up 0.55s ease;
+		}
+
+		.svg-shell svg {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+
+		@keyframes fade-up {
+			from {
+				opacity: 0;
+				transform: translateY(8px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 900px) {
+			.page {
+				grid-template-columns: 1fr;
+			}
+
+			.control-pane {
+				border-right: 0;
+				border-bottom: 1px solid var(--line);
+			}
+
+			.btn-row button {
+				flex: 1 1 calc(50% - 5px);
+			}
+		}
+
+		@media (max-width: 520px) {
+			.btn-row button {
+				flex: 1 1 100%;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="page">
+		<section class="control-pane">
+			<h1 class="control-title">Profile SVG Generator</h1>
+			<p class="control-note">Type your profile name and job/background, then it will replace "Ken Nebula" and "Web Developer" in the SVG below.</p>
+
+			<div class="input-group">
+				<label for="nameInput">Name</label>
+				<input id="nameInput" type="text" value="Ken Nebula" placeholder="Enter your name">
+			</div>
+
+			<div class="input-group">
+				<label for="backgroundInput">Job / Background</label>
+				<input id="backgroundInput" type="text" value="Web Developer" placeholder="Enter your job or background">
+			</div>
+
+			<div class="btn-row">
+				<button id="applyBtn" class="btn-primary" type="button">Apply to SVG</button>
+				<button id="downloadBtn" class="btn-secondary" type="button">Download SVG</button>
+				<button id="downloadPngBtn" class="btn-primary" type="button">Download PNG</button>
+				<button id="downloadGifBtn" class="btn-gif" type="button">Download GIF</button>
+			</div>
+		</section>
+
+		<section class="preview-pane">
+			<h2 class="preview-title">Live SVG Preview</h2>
+			<div class="svg-shell">
+				<svg
+					id="profileSvg"
+					width="500"
+					height="500"
+					viewBox="0 0 500 500"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+					role="img"
+					aria-label="Animated laptop profile SVG"
+				>
+					<defs>
+						<radialGradient id="bgGlow" cx="50%" cy="45%" r="65%">
+							<stop offset="0%" stop-color="#25204A"/>
+							<stop offset="45%" stop-color="#111125"/>
+							<stop offset="100%" stop-color="#050508"/>
+						</radialGradient>
+
+						<linearGradient id="screenGradient" x1="80" y1="70" x2="420" y2="350">
+							<stop offset="0%" stop-color="#17172B"/>
+							<stop offset="50%" stop-color="#0D0D1A"/>
+							<stop offset="100%" stop-color="#08080F"/>
+						</linearGradient>
+
+						<linearGradient id="bodyGradient" x1="100" y1="340" x2="410" y2="430">
+							<stop offset="0%" stop-color="#17172A"/>
+							<stop offset="45%" stop-color="#292945"/>
+							<stop offset="100%" stop-color="#0C0C16"/>
+						</linearGradient>
+
+						<linearGradient id="neonGradient" x1="120" y1="100" x2="390" y2="350">
+							<stop offset="0%" stop-color="#00C6FF"/>
+							<stop offset="50%" stop-color="#6C63FF"/>
+							<stop offset="100%" stop-color="#C026FF"/>
+						</linearGradient>
+
+						<linearGradient id="textGradient" x1="150" y1="170" x2="350" y2="210">
+							<stop offset="0%" stop-color="#00D4FF"/>
+							<stop offset="50%" stop-color="#6C63FF"/>
+							<stop offset="100%" stop-color="#C026FF"/>
+						</linearGradient>
+
+						<filter id="glow">
+							<feGaussianBlur stdDeviation="5" result="blur"/>
+							<feMerge>
+								<feMergeNode in="blur"/>
+								<feMergeNode in="SourceGraphic"/>
+							</feMerge>
+						</filter>
+
+						<filter id="softGlow">
+							<feGaussianBlur stdDeviation="15"/>
+						</filter>
+
+						<filter id="shadow">
+							<feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
+							<feOffset dy="10"/>
+							<feComponentTransfer>
+								<feFuncA type="linear" slope="0.5"/>
+							</feComponentTransfer>
+							<feMerge>
+								<feMergeNode/>
+								<feMergeNode in="SourceGraphic"/>
+							</feMerge>
+						</filter>
+
+						<clipPath id="typingClip">
+							<rect x="130" y="180" width="240" height="45"/>
+						</clipPath>
+					</defs>
+
+					<rect width="500" height="500" rx="30" fill="url(#bgGlow)"/>
+
+					<ellipse
+						cx="250"
+						cy="330"
+						rx="190"
+						ry="100"
+						fill="#5533FF"
+						opacity="0.15"
+						filter="url(#softGlow)"
+					/>
+
+					<g fill="url(#neonGradient)" opacity="0.7">
+						<circle id="particleOne" cx="70" cy="120" r="2">
+							<animate
+								attributeName="cy"
+								values="120;105;120"
+								dur="3s"
+								repeatCount="indefinite"
+							/>
+						</circle>
+
+						<circle id="particleTwo" cx="430" cy="120" r="2">
+							<animate
+								attributeName="cy"
+								values="120;135;120"
+								dur="4s"
+								repeatCount="indefinite"
+							/>
+						</circle>
+
+						<circle id="particleThree" cx="80" cy="350" r="1.5">
+							<animate
+								attributeName="cy"
+								values="350;335;350"
+								dur="3.5s"
+								repeatCount="indefinite"
+							/>
+						</circle>
+
+						<circle id="particleFour" cx="425" cy="330" r="1.5">
+							<animate
+								attributeName="cy"
+								values="330;345;330"
+								dur="2.8s"
+								repeatCount="indefinite"
+							/>
+						</circle>
+					</g>
+
+					<g
+						font-family="monospace"
+						font-size="11"
+						opacity="0.18"
+						fill="#6C63FF"
+					>
+						<text x="40" y="180">&lt;/&gt;</text>
+						<text x="420" y="220">{ }</text>
+						<text x="55" y="270">01 01</text>
+						<text x="400" y="300">const()</text>
+					</g>
+
+					<g filter="url(#shadow)">
+						<path
+							d="M112 92 Q112 72 132 72 H368 Q388 72 388 92 V315 Q388 335 368 335 H132 Q112 335 112 315 Z"
+							fill="#171722"
+							stroke="#383850"
+							stroke-width="3"
+						/>
+
+						<rect
+							x="123"
+							y="83"
+							width="254"
+							height="241"
+							rx="8"
+							fill="url(#screenGradient)"
+						/>
+
+						<rect
+							x="123"
+							y="83"
+							width="254"
+							height="241"
+							rx="8"
+							stroke="url(#neonGradient)"
+							stroke-width="1.5"
+							opacity="0.7"
+						/>
+
+						<circle
+							cx="250"
+							cy="78"
+							r="2"
+							fill="#6C63FF"
+							filter="url(#glow)"
+						/>
+
+						<rect
+							x="137"
+							y="98"
+							width="226"
+							height="23"
+							rx="5"
+							fill="#12121E"
+						/>
+
+						<circle cx="149" cy="109" r="3" fill="#FF5F56"/>
+						<circle cx="159" cy="109" r="3" fill="#FFBD2E"/>
+						<circle cx="169" cy="109" r="3" fill="#27C93F"/>
+
+						<text
+							x="190"
+							y="113"
+							font-family="monospace"
+							font-size="7"
+							fill="#666680"
+						>
+							developer.tsx
+						</text>
+
+						<g font-family="monospace" font-size="7">
+							<text x="145" y="140" fill="#6C63FF">01</text>
+							<text x="163" y="140" fill="#00C6FF">const</text>
+							<text x="190" y="140" fill="#C9C9D4"> developer = {</text>
+
+							<text x="145" y="153" fill="#6C63FF">02</text>
+							<text x="170" y="153" fill="#C9C9D4">name:</text>
+							<text id="codeNameText" x="205" y="153" fill="#B56CFF">"Ken Nebula"</text>
+
+							<text x="145" y="166" fill="#6C63FF">03</text>
+							<text x="170" y="166" fill="#C9C9D4">role:</text>
+							<text id="codeRoleText" x="205" y="166" fill="#B56CFF">"Web Developer"</text>
+
+							<text x="145" y="179" fill="#6C63FF">04</text>
+							<text x="163" y="179" fill="#C9C9D4">skills:</text>
+							<text x="210" y="179" fill="#00C6FF">["Laravel", "Vue"]</text>
+						</g>
+
+						<g clip-path="url(#typingClip)">
+							<text
+								id="displayNameText"
+								x="132"
+								y="207"
+								font-family="monospace"
+								font-size="25"
+								font-weight="bold"
+								fill="url(#textGradient)"
+							>
+								Ken Nebula
+							</text>
+
+							<rect
+								id="typingMask"
+								x="130"
+								y="180"
+								width="245"
+								height="45"
+								fill="#0D0D1A"
+							>
+								<animate
+									attributeName="x"
+									values="130;365;130"
+									keyTimes="0;0.55;1"
+									dur="5s"
+									repeatCount="indefinite"
+								/>
+
+								<animate
+									attributeName="width"
+									values="245;10;245"
+									keyTimes="0;0.55;1"
+									dur="5s"
+									repeatCount="indefinite"
+								/>
+							</rect>
+						</g>
+
+						<rect
+							id="cursorPrimary"
+							x="350"
+							y="187"
+							width="2"
+							height="25"
+							fill="#00C6FF"
+							filter="url(#glow)"
+						>
+							<animate
+								attributeName="opacity"
+								values="1;0;1"
+								dur="0.8s"
+								repeatCount="indefinite"
+							/>
+						</rect>
+
+						<text
+							id="displayRoleText"
+							x="250"
+							y="240"
+							text-anchor="middle"
+							font-family="Arial, sans-serif"
+							font-size="13"
+							letter-spacing="3"
+							fill="#B8B8CC"
+						>
+							WEB DEVELOPER
+						</text>
+
+						<line
+							x1="175"
+							y1="255"
+							x2="325"
+							y2="255"
+							stroke="url(#neonGradient)"
+							stroke-width="1"
+							opacity="0.7"
+						/>
+
+						<text
+							x="148"
+							y="280"
+							font-family="monospace"
+							font-size="8"
+							fill="#6C63FF"
+						>
+							~/portfolio $
+						</text>
+
+						<text
+							x="215"
+							y="280"
+							font-family="monospace"
+							font-size="8"
+							fill="#00C6FF"
+						>
+							build_future
+						</text>
+
+						<rect
+							id="cursorTerminal"
+							x="278"
+							y="273"
+							width="5"
+							height="9"
+							fill="#C026FF"
+						>
+							<animate
+								attributeName="opacity"
+								values="1;0;1"
+								dur="1s"
+								repeatCount="indefinite"
+							/>
+						</rect>
+					</g>
+
+					<path
+						d="M90 338 H410 L435 372 Q439 379 428 382 H72 Q61 379 65 372 Z"
+						fill="url(#bodyGradient)"
+						stroke="#41415B"
+						stroke-width="2"
+					/>
+
+					<path d="M100 340 H400 L414 361 H86 Z" fill="#222238"/>
+
+					<path
+						d="M207 345 H293 L302 358 H198 Z"
+						fill="#11111C"
+						stroke="#393950"
+						stroke-width="1"
+					/>
+
+					<path
+						d="M72 382 H428"
+						stroke="url(#neonGradient)"
+						stroke-width="2"
+						filter="url(#glow)"
+					/>
+
+					<animateTransform
+						id="floatAnimation"
+						attributeName="transform"
+						type="translate"
+						values="0 0; 0 -7; 0 0"
+						dur="4s"
+						repeatCount="indefinite"
+					/>
+				</svg>
+			</div>
+		</section>
+	</main>
+
+	<script src="https://cdn.jsdelivr.net/gh/antimatter15/jsgif@master/LZWEncoder.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/antimatter15/jsgif@master/NeuQuant.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/antimatter15/jsgif@master/GIFEncoder.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/antimatter15/jsgif@master/b64.js"></script>
+	<script>
+		(function () {
+			const nameInput = document.getElementById("nameInput");
+			const backgroundInput = document.getElementById("backgroundInput");
+			const applyBtn = document.getElementById("applyBtn");
+			const downloadBtn = document.getElementById("downloadBtn");
+			const downloadPngBtn = document.getElementById("downloadPngBtn");
+			const downloadGifBtn = document.getElementById("downloadGifBtn");
+			const codeNameText = document.getElementById("codeNameText");
+			const codeRoleText = document.getElementById("codeRoleText");
+			const displayNameText = document.getElementById("displayNameText");
+			const displayRoleText = document.getElementById("displayRoleText");
+			const profileSvg = document.getElementById("profileSvg");
+
+			function updateSvgText() {
+				const name = nameInput.value.trim() || "Ken Nebula";
+				const background = backgroundInput.value.trim() || "Web Developer";
+
+				codeNameText.textContent = `"${name}"`;
+				codeRoleText.textContent = `"${background}"`;
+				displayNameText.textContent = name;
+				displayRoleText.textContent = background;
+			}
+
+			function downloadSvg() {
+				updateSvgText();
+
+				const serializer = new XMLSerializer();
+				const svgClone = profileSvg.cloneNode(true);
+				svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+				const svgText = `<?xml version="1.0" encoding="UTF-8"?>\n${serializer.serializeToString(svgClone)}`;
+				const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+
+				link.href = url;
+				link.download = "animated-profile-laptop.svg";
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			}
+
+			function triangleAnimation(from, mid, progress, midPoint) {
+				if (progress <= midPoint) {
+					const local = progress / midPoint;
+					return from + (mid - from) * local;
+				}
+
+				const local = (progress - midPoint) / (1 - midPoint);
+				return mid + (from - mid) * local;
+			}
+
+			function animationValue(timeSeconds, durationSeconds, start, middle, midPoint) {
+				const progress = (timeSeconds % durationSeconds) / durationSeconds;
+				return triangleAnimation(start, middle, progress, midPoint);
+			}
+
+			function removeAnimationNodes(svgNode) {
+				svgNode.querySelectorAll("animate, animateTransform").forEach(function (node) {
+					node.remove();
+				});
+			}
+
+			function applyFrameState(svgNode, timeSeconds) {
+				const particleOne = svgNode.querySelector("#particleOne");
+				const particleTwo = svgNode.querySelector("#particleTwo");
+				const particleThree = svgNode.querySelector("#particleThree");
+				const particleFour = svgNode.querySelector("#particleFour");
+				const typingMask = svgNode.querySelector("#typingMask");
+				const cursorPrimary = svgNode.querySelector("#cursorPrimary");
+				const cursorTerminal = svgNode.querySelector("#cursorTerminal");
+
+				if (particleOne) {
+					particleOne.setAttribute("cy", String(animationValue(timeSeconds, 3, 120, 105, 0.5)));
+				}
+				if (particleTwo) {
+					particleTwo.setAttribute("cy", String(animationValue(timeSeconds, 4, 120, 135, 0.5)));
+				}
+				if (particleThree) {
+					particleThree.setAttribute("cy", String(animationValue(timeSeconds, 3.5, 350, 335, 0.5)));
+				}
+				if (particleFour) {
+					particleFour.setAttribute("cy", String(animationValue(timeSeconds, 2.8, 330, 345, 0.5)));
+				}
+
+				if (typingMask) {
+					typingMask.setAttribute("x", String(animationValue(timeSeconds, 5, 130, 365, 0.55)));
+					typingMask.setAttribute("width", String(animationValue(timeSeconds, 5, 245, 10, 0.55)));
+				}
+
+				if (cursorPrimary) {
+					cursorPrimary.setAttribute("opacity", String(animationValue(timeSeconds, 0.8, 1, 0, 0.5)));
+				}
+				if (cursorTerminal) {
+					cursorTerminal.setAttribute("opacity", String(animationValue(timeSeconds, 1, 1, 0, 0.5)));
+				}
+
+				const floatY = animationValue(timeSeconds, 4, 0, -7, 0.5);
+				svgNode.style.transform = `translateY(${floatY}px)`;
+			}
+
+			function svgNodeToImage(svgNode) {
+				return new Promise(function (resolve, reject) {
+					const serializer = new XMLSerializer();
+					svgNode.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+					svgNode.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+					const svgMarkup = serializer.serializeToString(svgNode);
+					const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+					const img = new Image();
+
+					img.onload = function () {
+						resolve(img);
+					};
+					img.onerror = function () {
+						reject(new Error("Failed to render SVG frame as image."));
+					};
+					img.src = dataUrl;
+				});
+			}
+
+			function binaryStringToBlob(binaryString) {
+				const length = binaryString.length;
+				const bytes = new Uint8Array(length);
+
+				for (let i = 0; i < length; i += 1) {
+					bytes[i] = binaryString.charCodeAt(i) & 0xff;
+				}
+
+				return new Blob([bytes], { type: "image/gif" });
+			}
+
+			async function downloadPng() {
+				updateSvgText();
+				downloadPngBtn.disabled = true;
+				downloadPngBtn.textContent = "Rendering PNG...";
+
+				try {
+					const width = 500;
+					const height = 500;
+					const canvas = document.createElement("canvas");
+					canvas.width = width;
+					canvas.height = height;
+					const ctx = canvas.getContext("2d");
+
+					const staticSvg = profileSvg.cloneNode(true);
+					removeAnimationNodes(staticSvg);
+
+					const typingMask = staticSvg.querySelector("#typingMask");
+					const cursorPrimary = staticSvg.querySelector("#cursorPrimary");
+					const cursorTerminal = staticSvg.querySelector("#cursorTerminal");
+
+					if (typingMask) {
+						typingMask.remove();
+					}
+					if (cursorPrimary) {
+						cursorPrimary.remove();
+					}
+					if (cursorTerminal) {
+						cursorTerminal.remove();
+					}
+
+					const staticImage = await svgNodeToImage(staticSvg);
+					ctx.clearRect(0, 0, width, height);
+					ctx.drawImage(staticImage, 0, 0, width, height);
+
+					canvas.toBlob(function (pngBlob) {
+						if (!pngBlob) {
+							downloadPngBtn.disabled = false;
+							downloadPngBtn.textContent = "Download PNG";
+							alert("PNG download failed. Please try again.");
+							return;
+						}
+
+						const url = URL.createObjectURL(pngBlob);
+						const link = document.createElement("a");
+						link.href = url;
+						link.download = "profile-laptop-static.png";
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+						URL.revokeObjectURL(url);
+						downloadPngBtn.disabled = false;
+						downloadPngBtn.textContent = "Download PNG";
+					}, "image/png");
+				} catch (error) {
+					downloadPngBtn.disabled = false;
+					downloadPngBtn.textContent = "Download PNG";
+					alert("PNG download failed. Please try again.");
+					console.error(error);
+				}
+			}
+
+			async function downloadGif() {
+				if (typeof GIFEncoder === "undefined") {
+					alert("GIF encoder failed to load. Please check internet connection and refresh.");
+					return;
+				}
+
+				updateSvgText();
+				downloadGifBtn.disabled = true;
+				downloadGifBtn.textContent = "Rendering GIF...";
+
+				try {
+					const width = 500;
+					const height = 500;
+					const frameCount = 40;
+					const totalDurationMs = 5000;
+					const frameDelay = Math.floor(totalDurationMs / frameCount);
+					const canvas = document.createElement("canvas");
+					canvas.width = width;
+					canvas.height = height;
+					const ctx = canvas.getContext("2d");
+					const encoder = new GIFEncoder();
+
+					encoder.setRepeat(0);
+					encoder.setDelay(frameDelay);
+					encoder.setQuality(10);
+					encoder.start();
+
+					for (let i = 0; i < frameCount; i += 1) {
+						const t = (i * totalDurationMs) / frameCount / 1000;
+						const frameSvg = profileSvg.cloneNode(true);
+						removeAnimationNodes(frameSvg);
+						applyFrameState(frameSvg, t);
+
+						const frameImage = await svgNodeToImage(frameSvg);
+						ctx.clearRect(0, 0, width, height);
+						ctx.drawImage(frameImage, 0, 0, width, height);
+						encoder.addFrame(ctx);
+					}
+
+					encoder.finish();
+					const binaryGif = encoder.stream().getData();
+					const gifBlob = binaryStringToBlob(binaryGif);
+					const url = URL.createObjectURL(gifBlob);
+					const link = document.createElement("a");
+					link.href = url;
+					link.download = "animated-profile-laptop.gif";
+					document.body.appendChild(link);
+					link.click();
+					document.body.removeChild(link);
+					URL.revokeObjectURL(url);
+					downloadGifBtn.disabled = false;
+					downloadGifBtn.textContent = "Download GIF";
+				} catch (error) {
+					downloadGifBtn.disabled = false;
+					downloadGifBtn.textContent = "Download GIF";
+					alert("GIF download failed. Please try again.");
+					console.error(error);
+				}
+			}
+
+			applyBtn.addEventListener("click", updateSvgText);
+			downloadBtn.addEventListener("click", downloadSvg);
+			downloadPngBtn.addEventListener("click", downloadPng);
+			downloadGifBtn.addEventListener("click", downloadGif);
+
+			nameInput.addEventListener("input", updateSvgText);
+			backgroundInput.addEventListener("input", updateSvgText);
+
+			updateSvgText();
+		})();
+	</script>
+</body>
+</html>
