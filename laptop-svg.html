@@ -70,6 +70,20 @@
 			margin-bottom: 16px;
 		}
 
+		.template-row {
+			display: flex;
+			gap: 10px;
+		}
+
+		.template-row button {
+			flex: 1 1 0;
+		}
+
+		.template-btn.active {
+			outline: 3px solid rgba(20, 108, 148, 0.2);
+			transform: translateY(-1px);
+		}
+
 		label {
 			display: block;
 			font-size: 0.88rem;
@@ -197,13 +211,26 @@
 			<p class="control-note">Type your profile name and job/background, then it will replace "Ken Nebula" and "Web Developer" in the SVG below.</p>
 
 			<div class="input-group">
+				<label>Template</label>
+				<div class="template-row">
+					<button id="templateLaptopBtn" class="btn-primary template-btn active" type="button">laptop</button>
+					<button id="templateProfileBtn" class="btn-secondary template-btn" type="button">profile</button>
+				</div>
+			</div>
+
+			<div class="input-group">
 				<label for="nameInput">Name</label>
-				<input id="nameInput" type="text" value="Ken Nebula" placeholder="Enter your name">
+				<input id="nameInput" type="text" value="Ken Nebula" placeholder="Enter your name" maxlength="20">
 			</div>
 
 			<div class="input-group">
 				<label for="backgroundInput">Job / Background</label>
-				<input id="backgroundInput" type="text" value="Web Developer" placeholder="Enter your job or background">
+				<input id="backgroundInput" type="text" value="Web Developer" placeholder="Enter your job or background" maxlength="20">
+			</div>
+
+			<div id="profileImageGroup" class="input-group">
+				<label for="profileImageInput">Profile Image (for profile template)</label>
+				<input id="profileImageInput" type="file" accept="image/*,.svg">
 			</div>
 
 			<div class="btn-row">
@@ -218,7 +245,7 @@
 			<h2 class="preview-title">Live SVG Preview</h2>
 			<div class="svg-shell">
 				<svg
-					id="profileSvg"
+					id="laptopSvg"
 					width="500"
 					height="500"
 					viewBox="0 0 500 500"
@@ -421,9 +448,9 @@
 							<text x="170" y="166" fill="#C9C9D4">role:</text>
 							<text id="codeRoleText" x="205" y="166" fill="#B56CFF">"Web Developer"</text>
 
-							<text x="145" y="179" fill="#6C63FF">04</text>
+							<!-- <text x="145" y="179" fill="#6C63FF">04</text>
 							<text x="163" y="179" fill="#C9C9D4">skills:</text>
-							<text x="210" y="179" fill="#00C6FF">["Laravel", "Vue"]</text>
+							<text x="210" y="179" fill="#00C6FF">["Laravel", "Vue"]</text> -->
 						</g>
 
 						<g clip-path="url(#typingClip)">
@@ -574,6 +601,153 @@
 						repeatCount="indefinite"
 					/>
 				</svg>
+
+				<svg
+					id="profileSvg"
+					width="500"
+					height="500"
+					viewBox="0 0 500 500"
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					role="img"
+					aria-label="Profile card SVG template"
+					style="display: none;"
+				>
+					<defs>
+						<linearGradient id="profile-bg" x1="0" y1="0" x2="1" y2="1">
+							<stop offset="0%" stop-color="#100c2c"/>
+							<stop offset="45%" stop-color="#24145b"/>
+							<stop offset="100%" stop-color="#090718"/>
+						</linearGradient>
+
+						<radialGradient id="profile-halo-grad">
+							<stop offset="0%" stop-color="#c99cff" stop-opacity=".55"/>
+							<stop offset="55%" stop-color="#7c5cff" stop-opacity=".16"/>
+							<stop offset="100%" stop-color="#7c5cff" stop-opacity="0"/>
+						</radialGradient>
+
+						<linearGradient id="profile-gold" x1="0" y1="0" x2="1" y2="1">
+							<stop offset="0%" stop-color="#fff0a6"/>
+							<stop offset="35%" stop-color="#e8b65a"/>
+							<stop offset="70%" stop-color="#a96824"/>
+							<stop offset="100%" stop-color="#ffe29a"/>
+						</linearGradient>
+
+						<linearGradient id="profile-pink" x1="0" y1="0" x2="1" y2="0">
+							<stop offset="0%" stop-color="#ff83dc"/>
+							<stop offset="50%" stop-color="#d8a6ff"/>
+							<stop offset="100%" stop-color="#7bdcff"/>
+						</linearGradient>
+
+						<filter id="profile-glow" x="-80%" y="-80%" width="260%" height="260%">
+							<feGaussianBlur stdDeviation="5" result="b"/>
+							<feMerge>
+								<feMergeNode in="b"/>
+								<feMergeNode in="SourceGraphic"/>
+							</feMerge>
+						</filter>
+
+						<filter id="profile-soft-glow" x="-100%" y="-100%" width="300%" height="300%">
+							<feGaussianBlur stdDeviation="14"/>
+						</filter>
+
+						<clipPath id="profile-card-clip">
+							<rect x="12" y="12" width="476" height="476" rx="36"/>
+						</clipPath>
+
+						<clipPath id="profile-photo-clip">
+							<rect x="130" y="30" width="340" height="430" rx="26"/>
+						</clipPath>
+					</defs>
+
+					<rect width="500" height="500" rx="40" fill="url(#profile-bg)"/>
+
+					<g clip-path="url(#profile-card-clip)">
+						<circle id="profileHalo" cx="350" cy="185" r="220" fill="url(#profile-halo-grad)">
+							<animate attributeName="r" values="205;235;205" dur="4s" repeatCount="indefinite"/>
+							<animate attributeName="opacity" values=".65;.95;.65" dur="4s" repeatCount="indefinite"/>
+						</circle>
+
+						<g fill="none" stroke="url(#profile-pink)" opacity=".18">
+							<circle id="profileRingOne" cx="360" cy="215" r="185">
+								<animateTransform attributeName="transform" type="rotate" from="0 360 215" to="360 360 215" dur="18s" repeatCount="indefinite"/>
+							</circle>
+							<circle id="profileRingTwo" cx="360" cy="215" r="150" stroke-dasharray="3 12">
+								<animateTransform attributeName="transform" type="rotate" from="360 360 215" to="0 360 215" dur="12s" repeatCount="indefinite"/>
+							</circle>
+						</g>
+
+						<g id="profileImageCard">
+							<rect x="115" y="0" width="385" height="500" rx="34" fill="#2b1f58" opacity=".45"/>
+							<rect x="130" y="30" width="340" height="430" rx="26" fill="#5a3a95" opacity=".35"/>
+							<image
+								id="profileUserImage"
+								x="130"
+								y="30"
+								width="340"
+								height="430"
+								preserveAspectRatio="xMidYMid slice"
+								href=""
+								clip-path="url(#profile-photo-clip)"
+								opacity="0.95"
+							>
+								<animateTransform attributeName="transform" type="translate" values="0 0; -3 -2; 0 0; 3 2; 0 0" dur="6s" repeatCount="indefinite"/>
+							</image>
+						</g>
+
+						<rect x="0" y="0" width="500" height="500" fill="url(#profile-bg)" opacity=".18"/>
+
+						<linearGradient id="profile-shade" x1="0" y1="0" x2="1" y2="0">
+							<stop offset="0%" stop-color="#090718" stop-opacity=".94"/>
+							<stop offset="42%" stop-color="#090718" stop-opacity=".55"/>
+							<stop offset="68%" stop-color="#090718" stop-opacity="0"/>
+						</linearGradient>
+						<rect x="0" y="0" width="500" height="500" fill="url(#profile-shade)"/>
+
+						<g fill="#f6d7ff" filter="url(#profile-glow)">
+							<circle id="profileParticleOne" cx="58" cy="92" r="2">
+								<animate attributeName="cy" values="92;72;92" dur="3s" repeatCount="indefinite"/>
+							</circle>
+							<circle id="profileParticleTwo" cx="92" cy="255" r="1.7">
+								<animate attributeName="cy" values="255;225;255" dur="4s" repeatCount="indefinite"/>
+							</circle>
+							<circle id="profileParticleThree" cx="54" cy="365" r="2">
+								<animate attributeName="cy" values="365;340;365" dur="3.5s" repeatCount="indefinite"/>
+							</circle>
+							<circle id="profileParticleFour" cx="145" cy="58" r="1.5">
+								<animate attributeName="cy" values="58;38;58" dur="3.2s" repeatCount="indefinite"/>
+							</circle>
+							<circle id="profileParticleFive" cx="432" cy="78" r="1.5">
+								<animate attributeName="cy" values="78;54;78" dur="3.8s" repeatCount="indefinite"/>
+							</circle>
+						</g>
+
+						<g>
+							<rect x="27" y="318" width="255" height="112" rx="20" fill="#080614" fill-opacity=".72" stroke="url(#profile-gold)" stroke-width="1.4"/>
+							<path d="M27 338 H282" stroke="url(#profile-pink)" stroke-width="2" opacity=".7"/>
+							<text id="profileRoleText" x="47" y="357" fill="#e7cfff" font-family="Arial, sans-serif" font-size="13" letter-spacing="4">WEB DEVELOPER</text>
+							<text id="profileNameText" x="45" y="393" fill="url(#profile-gold)" font-family="Arial, sans-serif" font-size="29" font-weight="700" letter-spacing="2">KEN NEBULA</text>
+							<text x="47" y="414" fill="#bcaee0" font-family="Arial, sans-serif" font-size="11" letter-spacing="2.5">BATTLE PROFILE</text>
+						</g>
+
+						<path d="M31 290 V265 Q31 255 41 255 H70" fill="none" stroke="url(#profile-gold)" stroke-width="2"/>
+						<path d="M470 210 V235 Q470 245 460 245 H438" fill="none" stroke="url(#profile-pink)" stroke-width="2"/>
+
+						<path id="profileSweep" d="M-40 470 Q170 390 540 450" fill="none" stroke="url(#profile-pink)" stroke-width="2.5" opacity=".8" filter="url(#profile-glow)">
+							<animate attributeName="d" values="M-40 470 Q170 390 540 450;M-40 450 Q190 420 540 470;M-40 470 Q170 390 540 450" dur="5s" repeatCount="indefinite"/>
+						</path>
+					</g>
+
+					<rect x="12" y="12" width="476" height="476" rx="36" fill="none" stroke="url(#profile-gold)" stroke-width="2"/>
+					<rect x="18" y="18" width="464" height="464" rx="31" fill="none" stroke="url(#profile-pink)" stroke-width="1" opacity=".55"/>
+
+					<g id="profileSparkle" transform="translate(92 118)" filter="url(#profile-glow)">
+						<path d="M0-14 L3-3 L14 0 L3 3 L0 14 L-3 3 L-14 0 L-3-3 Z" fill="#fff5ff">
+							<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="5s" repeatCount="indefinite"/>
+							<animate attributeName="opacity" values=".25;1;.25" dur="2s" repeatCount="indefinite"/>
+						</path>
+					</g>
+				</svg>
 			</div>
 		</section>
 	</main>
@@ -586,7 +760,11 @@
 		(function () {
 			const nameInput = document.getElementById("nameInput");
 			const backgroundInput = document.getElementById("backgroundInput");
+			const profileImageGroup = document.getElementById("profileImageGroup");
+			const profileImageInput = document.getElementById("profileImageInput");
 			const applyBtn = document.getElementById("applyBtn");
+			const templateLaptopBtn = document.getElementById("templateLaptopBtn");
+			const templateProfileBtn = document.getElementById("templateProfileBtn");
 			const downloadBtn = document.getElementById("downloadBtn");
 			const downloadPngBtn = document.getElementById("downloadPngBtn");
 			const downloadGifBtn = document.getElementById("downloadGifBtn");
@@ -594,23 +772,90 @@
 			const codeRoleText = document.getElementById("codeRoleText");
 			const displayNameText = document.getElementById("displayNameText");
 			const displayRoleText = document.getElementById("displayRoleText");
+			const profileNameText = document.getElementById("profileNameText");
+			const profileRoleText = document.getElementById("profileRoleText");
+			const profileUserImage = document.getElementById("profileUserImage");
+			const laptopSvg = document.getElementById("laptopSvg");
 			const profileSvg = document.getElementById("profileSvg");
+			let activeTemplate = "laptop";
+
+			function getActiveSvg() {
+				return activeTemplate === "laptop" ? laptopSvg : profileSvg;
+			}
+
+			function switchTemplate(templateName) {
+				activeTemplate = templateName;
+				laptopSvg.style.display = templateName === "laptop" ? "block" : "none";
+				profileSvg.style.display = templateName === "profile" ? "block" : "none";
+				profileImageGroup.style.display = templateName === "profile" ? "block" : "none";
+				templateLaptopBtn.classList.toggle("active", templateName === "laptop");
+				templateProfileBtn.classList.toggle("active", templateName === "profile");
+			}
 
 			function updateSvgText() {
-				const name = nameInput.value.trim() || "Ken Nebula";
-				const background = backgroundInput.value.trim() || "Web Developer";
+				const name = nameInput.value.slice(0, 18);
+				const background = backgroundInput.value.slice(0, 20);
+
+				nameInput.value = name;
+				backgroundInput.value = background;
 
 				codeNameText.textContent = `"${name}"`;
 				codeRoleText.textContent = `"${background}"`;
 				displayNameText.textContent = name;
 				displayRoleText.textContent = background;
+				profileNameText.textContent = name.toUpperCase();
+				profileRoleText.textContent = background.toUpperCase();
+			}
+
+			function setProfileImage(dataUrl) {
+				if (!profileUserImage) {
+					return;
+				}
+
+				profileUserImage.setAttribute("href", dataUrl);
+				profileUserImage.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
+			}
+
+			function onProfileImageFileSelected(event) {
+				const file = event.target.files && event.target.files[0];
+
+				if (!file) {
+					return;
+				}
+
+				const lowerName = file.name.toLowerCase();
+				const isSvg = lowerName.endsWith(".svg") || file.type === "image/svg+xml";
+				const isImageType = file.type.startsWith("image/") || isSvg;
+
+				if (!isImageType) {
+					alert("Please choose an image file (PNG, JPG, GIF, WEBP, or SVG).");
+					profileImageInput.value = "";
+					return;
+				}
+
+				const reader = new FileReader();
+				reader.onload = function (loadEvent) {
+					const result = typeof loadEvent.target.result === "string" ? loadEvent.target.result : "";
+
+					if (!result) {
+						alert("Image load failed. Please try another file.");
+						return;
+					}
+
+					setProfileImage(result);
+					switchTemplate("profile");
+				};
+				reader.onerror = function () {
+					alert("Image load failed. Please try another file.");
+				};
+				reader.readAsDataURL(file);
 			}
 
 			function downloadSvg() {
 				updateSvgText();
 
 				const serializer = new XMLSerializer();
-				const svgClone = profileSvg.cloneNode(true);
+				const svgClone = getActiveSvg().cloneNode(true);
 				svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 				const svgText = `<?xml version="1.0" encoding="UTF-8"?>\n${serializer.serializeToString(svgClone)}`;
 				const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
@@ -618,7 +863,7 @@
 				const link = document.createElement("a");
 
 				link.href = url;
-				link.download = "animated-profile-laptop.svg";
+				link.download = `animated-${activeTemplate}.svg`;
 				document.body.appendChild(link);
 				link.click();
 				document.body.removeChild(link);
@@ -654,6 +899,17 @@
 				const typingMask = svgNode.querySelector("#typingMask");
 				const cursorPrimary = svgNode.querySelector("#cursorPrimary");
 				const cursorTerminal = svgNode.querySelector("#cursorTerminal");
+				const profileHalo = svgNode.querySelector("#profileHalo");
+				const profileRingOne = svgNode.querySelector("#profileRingOne");
+				const profileRingTwo = svgNode.querySelector("#profileRingTwo");
+				const profileSparkle = svgNode.querySelector("#profileSparkle");
+				const profileImageCard = svgNode.querySelector("#profileImageCard");
+				const profileParticleOne = svgNode.querySelector("#profileParticleOne");
+				const profileParticleTwo = svgNode.querySelector("#profileParticleTwo");
+				const profileParticleThree = svgNode.querySelector("#profileParticleThree");
+				const profileParticleFour = svgNode.querySelector("#profileParticleFour");
+				const profileParticleFive = svgNode.querySelector("#profileParticleFive");
+				const profileSweep = svgNode.querySelector("#profileSweep");
 
 				if (particleOne) {
 					particleOne.setAttribute("cy", String(animationValue(timeSeconds, 3, 120, 105, 0.5)));
@@ -678,6 +934,56 @@
 				}
 				if (cursorTerminal) {
 					cursorTerminal.setAttribute("opacity", String(animationValue(timeSeconds, 1, 1, 0, 0.5)));
+				}
+
+				if (profileHalo) {
+					profileHalo.setAttribute("r", String(animationValue(timeSeconds, 4, 205, 235, 0.5)));
+					profileHalo.setAttribute("opacity", String(animationValue(timeSeconds, 4, 0.65, 0.95, 0.5)));
+				}
+
+				if (profileRingOne) {
+					const ringOneAngle = (timeSeconds % 18) / 18 * 360;
+					profileRingOne.setAttribute("transform", `rotate(${ringOneAngle} 360 215)`);
+				}
+
+				if (profileRingTwo) {
+					const ringTwoAngle = 360 - ((timeSeconds % 12) / 12 * 360);
+					profileRingTwo.setAttribute("transform", `rotate(${ringTwoAngle} 360 215)`);
+				}
+
+				if (profileImageCard) {
+					const imageCardX = animationValue(timeSeconds, 6, 0, -3, 0.5);
+					const imageCardY = animationValue(timeSeconds, 6, 0, -2, 0.5);
+					profileImageCard.setAttribute("transform", `translate(${imageCardX} ${imageCardY})`);
+				}
+
+				if (profileParticleOne) {
+					profileParticleOne.setAttribute("cy", String(animationValue(timeSeconds, 3, 92, 72, 0.5)));
+				}
+				if (profileParticleTwo) {
+					profileParticleTwo.setAttribute("cy", String(animationValue(timeSeconds, 4, 255, 225, 0.5)));
+				}
+				if (profileParticleThree) {
+					profileParticleThree.setAttribute("cy", String(animationValue(timeSeconds, 3.5, 365, 340, 0.5)));
+				}
+				if (profileParticleFour) {
+					profileParticleFour.setAttribute("cy", String(animationValue(timeSeconds, 3.2, 58, 38, 0.5)));
+				}
+				if (profileParticleFive) {
+					profileParticleFive.setAttribute("cy", String(animationValue(timeSeconds, 3.8, 78, 54, 0.5)));
+				}
+
+				if (profileSparkle) {
+					const sparkleAngle = (timeSeconds % 5) / 5 * 360;
+					const sparkleOpacity = animationValue(timeSeconds, 2, 0.25, 1, 0.5);
+					profileSparkle.setAttribute("transform", `translate(92 118) rotate(${sparkleAngle})`);
+					profileSparkle.setAttribute("opacity", String(sparkleOpacity));
+				}
+
+				if (profileSweep) {
+					const sweepY = animationValue(timeSeconds, 5, 470, 450, 0.5);
+					const sweepQ = animationValue(timeSeconds, 5, 390, 420, 0.5);
+					profileSweep.setAttribute("d", `M-40 ${sweepY} Q170 ${sweepQ} 540 450`);
 				}
 
 				const floatY = animationValue(timeSeconds, 4, 0, -7, 0.5);
@@ -727,12 +1033,13 @@
 					canvas.height = height;
 					const ctx = canvas.getContext("2d");
 
-					const staticSvg = profileSvg.cloneNode(true);
+					const staticSvg = getActiveSvg().cloneNode(true);
 					removeAnimationNodes(staticSvg);
 
 					const typingMask = staticSvg.querySelector("#typingMask");
 					const cursorPrimary = staticSvg.querySelector("#cursorPrimary");
 					const cursorTerminal = staticSvg.querySelector("#cursorTerminal");
+					const profileSparkle = staticSvg.querySelector("#profileSparkle");
 
 					if (typingMask) {
 						typingMask.remove();
@@ -742,6 +1049,9 @@
 					}
 					if (cursorTerminal) {
 						cursorTerminal.remove();
+					}
+					if (profileSparkle) {
+						profileSparkle.setAttribute("transform", "translate(92 118)");
 					}
 
 					const staticImage = await svgNodeToImage(staticSvg);
@@ -759,7 +1069,7 @@
 						const url = URL.createObjectURL(pngBlob);
 						const link = document.createElement("a");
 						link.href = url;
-						link.download = "profile-laptop-static.png";
+						link.download = `${activeTemplate}-static.png`;
 						document.body.appendChild(link);
 						link.click();
 						document.body.removeChild(link);
@@ -804,7 +1114,7 @@
 
 					for (let i = 0; i < frameCount; i += 1) {
 						const t = (i * totalDurationMs) / frameCount / 1000;
-						const frameSvg = profileSvg.cloneNode(true);
+						const frameSvg = getActiveSvg().cloneNode(true);
 						removeAnimationNodes(frameSvg);
 						applyFrameState(frameSvg, t);
 
@@ -820,7 +1130,7 @@
 					const url = URL.createObjectURL(gifBlob);
 					const link = document.createElement("a");
 					link.href = url;
-					link.download = "animated-profile-laptop.gif";
+					link.download = `animated-${activeTemplate}.gif`;
 					document.body.appendChild(link);
 					link.click();
 					document.body.removeChild(link);
@@ -836,6 +1146,13 @@
 			}
 
 			applyBtn.addEventListener("click", updateSvgText);
+			templateLaptopBtn.addEventListener("click", function () {
+				switchTemplate("laptop");
+			});
+			templateProfileBtn.addEventListener("click", function () {
+				switchTemplate("profile");
+			});
+			profileImageInput.addEventListener("change", onProfileImageFileSelected);
 			downloadBtn.addEventListener("click", downloadSvg);
 			downloadPngBtn.addEventListener("click", downloadPng);
 			downloadGifBtn.addEventListener("click", downloadGif);
@@ -843,6 +1160,7 @@
 			nameInput.addEventListener("input", updateSvgText);
 			backgroundInput.addEventListener("input", updateSvgText);
 
+			switchTemplate("laptop");
 			updateSvgText();
 		})();
 	</script>
