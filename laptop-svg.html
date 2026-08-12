@@ -70,18 +70,29 @@
 			margin-bottom: 16px;
 		}
 
-		.template-row {
-			display: flex;
-			gap: 10px;
+		select {
+			appearance: none;
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			width: 100%;
+			border: 1px solid #c9c2b2;
+			border-radius: 10px;
+			padding: 12px 44px 12px 14px;
+			font-size: 0.95rem;
+			font-weight: 600;
+			text-transform: capitalize;
+			letter-spacing: 0.04em;
+			font-family: inherit;
+			background: #fff;
+			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231f2937' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+			background-repeat: no-repeat;
+			background-position: right 14px center;
+			background-size: 14px;
+			cursor: pointer;
 		}
 
-		.template-row button {
-			flex: 1 1 0;
-		}
-
-		.template-btn.active {
-			outline: 3px solid rgba(20, 108, 148, 0.2);
-			transform: translateY(-1px);
+		select option {
+			text-transform: capitalize;
 		}
 
 		label {
@@ -102,6 +113,12 @@
 		}
 
 		input[type="text"]:focus {
+			border-color: var(--accent);
+			box-shadow: 0 0 0 3px rgba(20, 108, 148, 0.15);
+			outline: none;
+		}
+
+		select:focus {
 			border-color: var(--accent);
 			box-shadow: 0 0 0 3px rgba(20, 108, 148, 0.15);
 			outline: none;
@@ -212,10 +229,10 @@
 
 			<div class="input-group">
 				<label>Template</label>
-				<div class="template-row">
-					<button id="templateLaptopBtn" class="btn-primary template-btn active" type="button">laptop</button>
-					<button id="templateProfileBtn" class="btn-secondary template-btn" type="button">profile</button>
-				</div>
+				<select id="templateSelect" aria-label="Choose template">
+					<option value="laptop">laptop</option>
+					<option value="profile">profile</option>
+				</select>
 			</div>
 
 			<div class="input-group">
@@ -772,8 +789,7 @@
 			const profileImageGroup = document.getElementById("profileImageGroup");
 			const profileImageInput = document.getElementById("profileImageInput");
 			const applyBtn = document.getElementById("applyBtn");
-			const templateLaptopBtn = document.getElementById("templateLaptopBtn");
-			const templateProfileBtn = document.getElementById("templateProfileBtn");
+			const templateSelect = document.getElementById("templateSelect");
 			const downloadBtn = document.getElementById("downloadBtn");
 			const downloadPngBtn = document.getElementById("downloadPngBtn");
 			const downloadGifBtn = document.getElementById("downloadGifBtn");
@@ -795,12 +811,11 @@
 
 			function switchTemplate(templateName) {
 				activeTemplate = templateName;
+				templateSelect.value = templateName;
 				laptopSvg.style.display = templateName === "laptop" ? "block" : "none";
 				profileSvg.style.display = templateName === "profile" ? "block" : "none";
 				profileBattleGroup.style.display = templateName === "profile" ? "block" : "none";
 				profileImageGroup.style.display = templateName === "profile" ? "block" : "none";
-				templateLaptopBtn.classList.toggle("active", templateName === "laptop");
-				templateProfileBtn.classList.toggle("active", templateName === "profile");
 			}
 
 			function updateSvgText() {
@@ -1174,11 +1189,8 @@
 			}
 
 			applyBtn.addEventListener("click", updateSvgText);
-			templateLaptopBtn.addEventListener("click", function () {
-				switchTemplate("laptop");
-			});
-			templateProfileBtn.addEventListener("click", function () {
-				switchTemplate("profile");
+			templateSelect.addEventListener("change", function () {
+				switchTemplate(templateSelect.value);
 			});
 			profileImageInput.addEventListener("change", onProfileImageFileSelected);
 			downloadBtn.addEventListener("click", downloadSvg);
