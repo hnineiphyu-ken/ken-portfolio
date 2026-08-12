@@ -225,7 +225,7 @@
 	<main class="page">
 		<section class="control-pane">
 			<h1 class="control-title">Profile SVG Generator</h1>
-			<p class="control-note">Type your profile name and job/background, then it will replace "Ken Nebula" and "Web Developer" in the SVG below.</p>
+			<p class="control-note">Type your profile name and role/title, then it will replace "Ken Nebula" and "Angel of Battle" in the SVG below.</p>
 
 			<div class="input-group">
 				<label>Template</label>
@@ -241,9 +241,14 @@
 				<input id="nameInput" type="text" value="Ken Nebula" placeholder="Enter your name" maxlength="20">
 			</div>
 
-			<div id="backgroundInputGroup" class="input-group">
+			<div id="laptopRoleGroup" class="input-group">
 				<label for="backgroundInput">Job / Background</label>
 				<input id="backgroundInput" type="text" value="Web Developer" placeholder="Enter your job or background" maxlength="20">
+			</div>
+
+			<div id="profileRoleGroup" class="input-group">
+				<label for="profileRoleInput">Title</label>
+				<input id="profileRoleInput" type="text" value="Angel of Battle" placeholder="Enter a title" maxlength="20">
 			</div>
 
 			<div id="profileBattleGroup" class="input-group">
@@ -819,9 +824,11 @@
 		(function () {
 			const nameInput = document.getElementById("nameInput");
 			const backgroundInput = document.getElementById("backgroundInput");
+			const profileRoleInput = document.getElementById("profileRoleInput");
 			const battleInput = document.getElementById("battleInput");
 			const textInputsGroup = document.getElementById("textInputsGroup");
-			const backgroundInputGroup = document.getElementById("backgroundInputGroup");
+			const laptopRoleGroup = document.getElementById("laptopRoleGroup");
+			const profileRoleGroup = document.getElementById("profileRoleGroup");
 			const profileBattleGroup = document.getElementById("profileBattleGroup");
 			const profileImageGroup = document.getElementById("profileImageGroup");
 			const profileImageInput = document.getElementById("profileImageInput");
@@ -866,7 +873,8 @@
 				energySvg.style.display = templateName === "energy" ? "block" : "none";
 				applyBtn.style.display = templateName === "energy" ? "none" : "";
 				textInputsGroup.style.display = templateName === "energy" ? "none" : "block";
-				backgroundInputGroup.style.display = templateName === "energy" ? "none" : "block";
+				laptopRoleGroup.style.display = templateName === "laptop" ? "block" : "none";
+				profileRoleGroup.style.display = templateName === "profile" ? "block" : "none";
 				profileBattleGroup.style.display = templateName === "profile" ? "block" : "none";
 				profileImageGroup.style.display = templateName === "profile" ? "block" : "none";
 				energyImageGroup.style.display = templateName === "energy" ? "block" : "none";
@@ -877,10 +885,12 @@
 			function updateSvgText() {
 				const name = nameInput.value.slice(0, 18);
 				const background = backgroundInput.value.slice(0, 20);
+				const profileRole = profileRoleInput.value.slice(0, 20);
 				const battleLabel = battleInput.value.slice(0, 20);
 
 				nameInput.value = name;
 				backgroundInput.value = background;
+				profileRoleInput.value = profileRole;
 				battleInput.value = battleLabel;
 
 				codeNameText.textContent = `"${name}"`;
@@ -888,7 +898,7 @@
 				displayNameText.textContent = name;
 				displayRoleText.textContent = background;
 				profileNameText.textContent = name.toUpperCase();
-				profileRoleText.textContent = background.toUpperCase();
+				profileRoleText.textContent = profileRole.toUpperCase();
 				profileBattleText.textContent = battleLabel.toUpperCase();
 				energyTitleText.textContent = energyNameInput.value.slice(0, 28).toUpperCase();
 			}
@@ -1299,6 +1309,7 @@
 
 			nameInput.addEventListener("input", updateSvgText);
 			backgroundInput.addEventListener("input", updateSvgText);
+			profileRoleInput.addEventListener("input", updateSvgText);
 			battleInput.addEventListener("input", updateSvgText);
 			energyNameInput.addEventListener("input", updateSvgText);
 
