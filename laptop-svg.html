@@ -232,15 +232,16 @@
 				<select id="templateSelect" aria-label="Choose template">
 					<option value="laptop">laptop</option>
 					<option value="profile">profile</option>
+					<option value="energy">Profile 2</option>
 				</select>
 			</div>
 
-			<div class="input-group">
+			<div id="textInputsGroup" class="input-group">
 				<label for="nameInput">Name</label>
 				<input id="nameInput" type="text" value="Ken Nebula" placeholder="Enter your name" maxlength="20">
 			</div>
 
-			<div class="input-group">
+			<div id="backgroundInputGroup" class="input-group">
 				<label for="backgroundInput">Job / Background</label>
 				<input id="backgroundInput" type="text" value="Web Developer" placeholder="Enter your job or background" maxlength="20">
 			</div>
@@ -253,6 +254,21 @@
 			<div id="profileImageGroup" class="input-group">
 				<label for="profileImageInput">Profile Image (for profile template)</label>
 				<input id="profileImageInput" type="file" accept="image/*,.svg">
+			</div>
+
+			<div id="energyImageGroup" class="input-group">
+				<label for="energyNameInput">Name</label>
+				<input id="energyNameInput" type="text" value="Ken Nebula" placeholder="Enter a name" maxlength="28">
+			</div>
+
+			<div id="energyMainImageGroup" class="input-group">
+				<label for="energyImageInput">Main Character Image</label>
+				<input id="energyImageInput" type="file" accept="image/*,.svg">
+			</div>
+
+			<div id="energyEchoImageGroup" class="input-group">
+				<label for="energyEchoImageInput">Background Echo Image</label>
+				<input id="energyEchoImageInput" type="file" accept="image/*,.svg">
 			</div>
 
 			<div class="btn-row">
@@ -772,6 +788,25 @@
 						</path>
 					</g>
 				</svg>
+
+				<svg id="energySvg" width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="Animated energy profile SVG" style="display: none;">
+					<defs>
+						<linearGradient id="energyBg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050b17"/><stop offset=".55" stop-color="#0a2846"/><stop offset="1" stop-color="#030712"/></linearGradient>
+						<radialGradient id="energyAura"><stop stop-color="#62f3ff" stop-opacity=".5"/><stop offset=".55" stop-color="#1b9cff" stop-opacity=".12"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+						<filter id="energyGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+						<clipPath id="energyMainClip"><rect x="272" y="54" width="210" height="400" rx="12"/></clipPath>
+					</defs>
+					<rect width="500" height="500" fill="url(#energyBg)"/>
+					<circle id="energyAuraPulse" cx="355" cy="245" r="210" fill="url(#energyAura)"><animate attributeName="r" values="195;220;195" dur="4s" repeatCount="indefinite"/></circle>
+					<path d="M0 75L500 0M0 420L500 500" stroke="#4bdfff" stroke-opacity=".12" stroke-width="2"/>
+					<g opacity=".20" transform="skewY(-7)"><image id="energyEchoImage" href="assets/imgs/energyEchoImage.jpg" xlink:href="assets/imgs/energyEchoImage.jpg" x="-70" y="74" width="430" height="420" preserveAspectRatio="xMidYMid slice"><animateTransform attributeName="transform" type="translate" values="0 0;8 -5;0 0" dur="6s" repeatCount="indefinite"/></image></g>
+					<path d="M18 34H383V401H18Z" fill="#071426" fill-opacity=".25" stroke="#69f4ff" stroke-opacity=".35"/>
+					<image id="energyMainImage" href="assets/imgs/Angela%20mobile%20legends%20No%20BG.png" xlink:href="assets/imgs/Angela%20mobile%20legends%20No%20BG.png" x="272" y="54" width="210" height="400" preserveAspectRatio="xMidYMid slice" clip-path="url(#energyMainClip)"><animateTransform attributeName="transform" type="translate" values="0 0;-4 -2;0 0;4 2;0 0" dur="6s" repeatCount="indefinite"/></image>
+					<g fill="none" stroke="#69f4ff" filter="url(#energyGlow)"><path d="M285 150C250 125 245 92 275 72" stroke-width="2"/><path d="M457 120C490 150 492 185 472 205" stroke-width="2"/><path d="M275 348C250 370 260 401 292 413" stroke-width="2"/><path d="M454 365C480 348 487 318 470 292" stroke-width="2"/></g>
+					<g transform="translate(255 451)" fill="none" stroke="#62efff" filter="url(#energyGlow)" opacity=".82"><g id="energyRingOne"><ellipse rx="118" ry="18" stroke-width="1.25"/><path d="M-96 0L0-15 96 0 0 15Z" stroke-width=".9"/><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s" repeatCount="indefinite"/></g><g id="energyRingTwo"><ellipse rx="78" ry="12" stroke-width=".8" stroke-dasharray="3 5"/><animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="5.5s" repeatCount="indefinite"/></g><circle id="energyCore" r="7" stroke-width="1.5"><animate attributeName="r" values="5;9;5" dur="1.8s" repeatCount="indefinite"/></circle><circle r="2.2" fill="#9dffff" stroke="none"/></g>
+					<text id="energyTitleText" x="250" y="488" text-anchor="middle" fill="#d8fbff" font-family="Arial, sans-serif" font-size="9" letter-spacing="2.4">KEN NEBULA</text>
+					<rect x="5" y="5" width="490" height="490" rx="17" fill="none" stroke="#8ff8ff" stroke-opacity=".3"/>
+				</svg>
 			</div>
 		</section>
 	</main>
@@ -785,9 +820,17 @@
 			const nameInput = document.getElementById("nameInput");
 			const backgroundInput = document.getElementById("backgroundInput");
 			const battleInput = document.getElementById("battleInput");
+			const textInputsGroup = document.getElementById("textInputsGroup");
+			const backgroundInputGroup = document.getElementById("backgroundInputGroup");
 			const profileBattleGroup = document.getElementById("profileBattleGroup");
 			const profileImageGroup = document.getElementById("profileImageGroup");
 			const profileImageInput = document.getElementById("profileImageInput");
+			const energyImageGroup = document.getElementById("energyImageGroup");
+			const energyMainImageGroup = document.getElementById("energyMainImageGroup");
+			const energyEchoImageGroup = document.getElementById("energyEchoImageGroup");
+			const energyNameInput = document.getElementById("energyNameInput");
+			const energyImageInput = document.getElementById("energyImageInput");
+			const energyEchoImageInput = document.getElementById("energyEchoImageInput");
 			const applyBtn = document.getElementById("applyBtn");
 			const templateSelect = document.getElementById("templateSelect");
 			const downloadBtn = document.getElementById("downloadBtn");
@@ -803,10 +846,16 @@
 			const profileUserImage = document.getElementById("profileUserImage");
 			const laptopSvg = document.getElementById("laptopSvg");
 			const profileSvg = document.getElementById("profileSvg");
+			const energySvg = document.getElementById("energySvg");
+			const energyMainImage = document.getElementById("energyMainImage");
+			const energyEchoImage = document.getElementById("energyEchoImage");
+			const energyTitleText = document.getElementById("energyTitleText");
 			let activeTemplate = "laptop";
 
 			function getActiveSvg() {
-				return activeTemplate === "laptop" ? laptopSvg : profileSvg;
+				if (activeTemplate === "laptop") return laptopSvg;
+				if (activeTemplate === "profile") return profileSvg;
+				return energySvg;
 			}
 
 			function switchTemplate(templateName) {
@@ -814,8 +863,15 @@
 				templateSelect.value = templateName;
 				laptopSvg.style.display = templateName === "laptop" ? "block" : "none";
 				profileSvg.style.display = templateName === "profile" ? "block" : "none";
+				energySvg.style.display = templateName === "energy" ? "block" : "none";
+				applyBtn.style.display = templateName === "energy" ? "none" : "";
+				textInputsGroup.style.display = templateName === "energy" ? "none" : "block";
+				backgroundInputGroup.style.display = templateName === "energy" ? "none" : "block";
 				profileBattleGroup.style.display = templateName === "profile" ? "block" : "none";
 				profileImageGroup.style.display = templateName === "profile" ? "block" : "none";
+				energyImageGroup.style.display = templateName === "energy" ? "block" : "none";
+				energyMainImageGroup.style.display = templateName === "energy" ? "block" : "none";
+				energyEchoImageGroup.style.display = templateName === "energy" ? "block" : "none";
 			}
 
 			function updateSvgText() {
@@ -834,6 +890,7 @@
 				profileNameText.textContent = name.toUpperCase();
 				profileRoleText.textContent = background.toUpperCase();
 				profileBattleText.textContent = battleLabel.toUpperCase();
+				energyTitleText.textContent = energyNameInput.value.slice(0, 28).toUpperCase();
 			}
 
 			function setProfileImage(dataUrl) {
@@ -845,8 +902,13 @@
 				profileUserImage.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
 			}
 
+			function setEnergyImage(imageNode, dataUrl) {
+				imageNode.setAttribute("href", dataUrl);
+				imageNode.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
+			}
+
 			function getSafeBaseName() {
-				const rawName = nameInput.value.trim() || "profile";
+				const rawName = (activeTemplate === "energy" ? energyNameInput.value : nameInput.value).trim() || "profile";
 				const noInvalidChars = rawName
 					.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
 					.replace(/\s+/g, "-")
@@ -888,6 +950,23 @@
 				reader.onerror = function () {
 					alert("Image load failed. Please try another file.");
 				};
+				reader.readAsDataURL(file);
+			}
+
+			function onEnergyImageFileSelected(event, imageNode) {
+				const file = event.target.files && event.target.files[0];
+				if (!file) return;
+				if (!file.type.startsWith("image/") && !file.name.toLowerCase().endsWith(".svg")) {
+					alert("Please choose an image file.");
+					event.target.value = "";
+					return;
+				}
+				const reader = new FileReader();
+				reader.onload = function (loadEvent) {
+					const dataUrl = typeof loadEvent.target.result === "string" ? loadEvent.target.result : "";
+					if (dataUrl) setEnergyImage(imageNode, dataUrl);
+				};
+				reader.onerror = function () { alert("Image load failed. Please try another file."); };
 				reader.readAsDataURL(file);
 			}
 
@@ -951,6 +1030,12 @@
 				const profileParticleFour = svgNode.querySelector("#profileParticleFour");
 				const profileParticleFive = svgNode.querySelector("#profileParticleFive");
 				const profileSweep = svgNode.querySelector("#profileSweep");
+				const energyAuraPulse = svgNode.querySelector("#energyAuraPulse");
+				const energyRingOne = svgNode.querySelector("#energyRingOne");
+				const energyRingTwo = svgNode.querySelector("#energyRingTwo");
+				const energyCore = svgNode.querySelector("#energyCore");
+				const energyMainImageFrame = svgNode.querySelector("#energyMainImage");
+				const energyEchoImageFrame = svgNode.querySelector("#energyEchoImage");
 
 				if (particleOne) {
 					particleOne.setAttribute("cy", String(animationValue(timeSeconds, 3, 120, 105, 0.5)));
@@ -1025,6 +1110,19 @@
 					const sweepY = animationValue(timeSeconds, 5, 470, 450, 0.5);
 					const sweepQ = animationValue(timeSeconds, 5, 390, 420, 0.5);
 					profileSweep.setAttribute("d", `M-40 ${sweepY} Q170 ${sweepQ} 540 450`);
+				}
+
+				if (energyAuraPulse) energyAuraPulse.setAttribute("r", String(animationValue(timeSeconds, 4, 195, 220, 0.5)));
+				if (energyRingOne) energyRingOne.setAttribute("transform", `rotate(${(timeSeconds % 8) / 8 * 360})`);
+				if (energyRingTwo) energyRingTwo.setAttribute("transform", `rotate(${360 - ((timeSeconds % 5.5) / 5.5 * 360)})`);
+				if (energyCore) energyCore.setAttribute("r", String(animationValue(timeSeconds, 1.8, 5, 9, 0.5)));
+				if (energyMainImageFrame) {
+					const imageOffset = animationValue(timeSeconds, 6, 0, -4, 0.5);
+					energyMainImageFrame.setAttribute("transform", `translate(${imageOffset} ${imageOffset / 2})`);
+				}
+				if (energyEchoImageFrame) {
+					const echoOffset = animationValue(timeSeconds, 6, 0, 8, 0.5);
+					energyEchoImageFrame.setAttribute("transform", `translate(${echoOffset} ${-echoOffset / 2})`);
 				}
 
 				const floatY = animationValue(timeSeconds, 4, 0, -7, 0.5);
@@ -1193,6 +1291,8 @@
 				switchTemplate(templateSelect.value);
 			});
 			profileImageInput.addEventListener("change", onProfileImageFileSelected);
+			energyImageInput.addEventListener("change", function (event) { onEnergyImageFileSelected(event, energyMainImage); });
+			energyEchoImageInput.addEventListener("change", function (event) { onEnergyImageFileSelected(event, energyEchoImage); });
 			downloadBtn.addEventListener("click", downloadSvg);
 			downloadPngBtn.addEventListener("click", downloadPng);
 			downloadGifBtn.addEventListener("click", downloadGif);
@@ -1200,6 +1300,7 @@
 			nameInput.addEventListener("input", updateSvgText);
 			backgroundInput.addEventListener("input", updateSvgText);
 			battleInput.addEventListener("input", updateSvgText);
+			energyNameInput.addEventListener("input", updateSvgText);
 
 			switchTemplate("laptop");
 			updateSvgText();
