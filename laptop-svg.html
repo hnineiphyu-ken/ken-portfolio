@@ -830,6 +830,17 @@
 				profileUserImage.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", dataUrl);
 			}
 
+			function getSafeBaseName() {
+				const rawName = nameInput.value.trim() || "profile";
+				const noInvalidChars = rawName
+					.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
+					.replace(/\s+/g, "-")
+					.replace(/\.+$/g, "")
+					.replace(/^-+|-+$/g, "");
+
+				return noInvalidChars || "profile";
+			}
+
 			function onProfileImageFileSelected(event) {
 				const file = event.target.files && event.target.files[0];
 
@@ -875,9 +886,10 @@
 				const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
 				const url = URL.createObjectURL(blob);
 				const link = document.createElement("a");
+				const baseName = getSafeBaseName();
 
 				link.href = url;
-				link.download = `animated-${activeTemplate}.svg`;
+				link.download = `${baseName}-${activeTemplate}.svg`;
 				document.body.appendChild(link);
 				link.click();
 				document.body.removeChild(link);
@@ -1082,8 +1094,9 @@
 
 						const url = URL.createObjectURL(pngBlob);
 						const link = document.createElement("a");
+						const baseName = getSafeBaseName();
 						link.href = url;
-						link.download = `${activeTemplate}-static.png`;
+						link.download = `${baseName}-${activeTemplate}-static.png`;
 						document.body.appendChild(link);
 						link.click();
 						document.body.removeChild(link);
@@ -1143,8 +1156,9 @@
 					const gifBlob = binaryStringToBlob(binaryGif);
 					const url = URL.createObjectURL(gifBlob);
 					const link = document.createElement("a");
+					const baseName = getSafeBaseName();
 					link.href = url;
-					link.download = `animated-${activeTemplate}.gif`;
+					link.download = `${baseName}-${activeTemplate}.gif`;
 					document.body.appendChild(link);
 					link.click();
 					document.body.removeChild(link);
