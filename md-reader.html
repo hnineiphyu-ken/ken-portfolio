@@ -24,6 +24,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .tree { list-style: none; }
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
+.tree .root-row { font-size: 13px; color: #57606a; word-break: break-all; margin: 8px 0 4px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .tree a { color: #24292f; text-decoration: none; font-size: 14px; display: block; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 .tree a:hover { background: #f0f1f3; }
 .tree a.active { background: #0969da; color: #fff; }
@@ -86,8 +87,8 @@ const mainEl = document.getElementById('main');
 const pathEl = document.getElementById('currentPath');
 
 let dirHandle = null;
-let mdFiles = []; // { handle?, file?, rel }
-let rootCollapsed = false;
+let roots = []; // { id, name, files, collapsed }
+let nextRootId = 1;
 
 openBtn.addEventListener('click', async () => {
   if (!('showDirectoryPicker' in window)) {
@@ -98,14 +99,13 @@ openBtn.addEventListener('click', async () => {
   try {
     dirHandle = await window.showDirectoryPicker({ mode: 'read' });
     renderLoading('Reading files...');
-    mdFiles = [];
-    await walk(dirHandle, '');
-    rootCollapsed = false;
-    renderRootFolder(dirHandle.name);
-    renderTree();
-    if (mdFiles.length === 0) {
+    const files = [];
+    await walk(dirHandle, '', files);
+    if (files.length === 0) {
       renderEmpty('<div class="empty">No <code>.md</code> files found in this folder.</div>');
     } else {
+      addRoot(dirHandle.name, files);
+      renderTree();
       renderEmpty('<div class="empty">Select a markdown file from the sidebar to read it.</div>');
     }
   } catch (e) {
@@ -122,23 +122,20 @@ fileInput.addEventListener('change', () => {
 
 function readSelectedFiles() {
   const files = Array.from(fileInput.files || []);
-  mdFiles = files
+  const markdownFiles = files
     .filter(file => file.name.toLowerCase().endsWith('.md'))
     .map(file => ({
       file,
       rel: file.webkitRelativePath || file.name
     }));
   dirHandle = null;
-    rootCollapsed = false;
-    if (files.length > 0) {
-      renderRootFolder('Selected files');
-    } else {
-      pathEl.style.display = 'none';
-    }
+    if (markdownFiles.length > 0) {
+    addRoot('Selected files', markdownFiles);
+  }
   renderTree();
   if (files.length === 0) {
     renderEmpty('<div class="empty">Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</div>');
-  } else if (mdFiles.length === 0) {
+  } else if (markdownFiles.length === 0) {
     renderEmpty('<div class="empty">No <code>.md</code> files found in the selected files.</div>');
   } else {
     renderEmpty('<div class="empty">Select a markdown file from the sidebar to read it.</div>');
@@ -147,25 +144,93 @@ function readSelectedFiles() {
 
 searchInput.addEventListener('input', renderTree);
 
-async function walk(handle, prefix) {
+async function walk(handle, prefix, files) {
   for await (const entry of handle.values()) {
     if (entry.kind === 'directory') {
-      await walk(entry, prefix ? prefix + '/' + entry.name : entry.name);
+      await walk(entry, prefix ? prefix + '/' + entry.name : entry.name, files);
     } else if (entry.name.toLowerCase().endsWith('.md')) {
-      mdFiles.push({ handle: entry, rel: prefix ? prefix + '/' + entry.name : entry.name });
+      files.push({ handle: entry, rel: prefix ? prefix + '/' + entry.name : entry.name });
     }
   }
 }
 
 function renderTree() {
-  mdFiles.sort((a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }));
   const searchTerm = searchInput.value.trim().toLowerCase();
-  const visibleFiles = searchTerm
-    ? mdFiles.filter(f => f.rel.toLowerCase().includes(searchTerm))
-    : mdFiles;
+  treeEl.innerHTML = '';
 
+  let totalFiles = 0;
+  let totalVisibleFiles = 0;
+  for (const root of roots) {
+    root.files.sort((a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }));
+    const visibleFiles = searchTerm
+      ? root.files.filter(f => f.rel.toLowerCase().includes(searchTerm))
+      : root.files;
+
+    totalFiles += root.files.length;
+    totalVisibleFiles += visibleFiles.length;
+    if (visibleFiles.length > 0 || !searchTerm) {
+      buildRoot(root, visibleFiles, treeEl);
+    }
+  }
+
+  if (totalFiles > 0 && totalVisibleFiles === 0) {
+    treeEl.innerHTML = '<li class="empty">No matching files found.</li>';
+  }
+}
+
+function addRoot(name, files) {
+  roots.push({ id: nextRootId++, name, files, collapsed: false });
+  pathEl.style.display = 'none';
+}
+
+function buildRoot(root, files, parentUl) {
+  const li = document.createElement('li');
+  const row = document.createElement('div');
+  row.className = 'root-row';
+
+  const toggle = document.createElement('span');
+  toggle.className = 'root-toggle';
+  toggle.textContent = '📁 ' + root.name;
+  toggle.classList.toggle('collapsed', root.collapsed);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-root';
+  removeBtn.type = 'button';
+  removeBtn.textContent = '×';
+  removeBtn.setAttribute('aria-label', 'Remove selected folder');
+
+  const ul = document.createElement('ul');
+  ul.className = 'children';
+  ul.classList.toggle('collapsed', root.collapsed);
+  buildUl(buildFileTree(files), ul);
+
+  toggle.addEventListener('click', () => {
+    root.collapsed = !root.collapsed;
+    toggle.classList.toggle('collapsed', root.collapsed);
+    ul.classList.toggle('collapsed', root.collapsed);
+  });
+
+  removeBtn.addEventListener('click', () => {
+    roots = roots.filter(item => item.id !== root.id);
+    renderTree();
+    if (roots.length === 0) {
+      dirHandle = null;
+      fileInput.value = '';
+      searchInput.value = '';
+      renderEmpty('<div class="empty"><p>Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</p><p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p></div>');
+    }
+  });
+
+  row.appendChild(toggle);
+  row.appendChild(removeBtn);
+  li.appendChild(row);
+  li.appendChild(ul);
+  parentUl.appendChild(li);
+}
+
+function buildFileTree(files) {
   const root = {};
-  for (const f of visibleFiles) {
+  for (const f of files) {
     const parts = f.rel.split('/');
     let node = root;
     for (let i = 0; i < parts.length - 1; i++) {
@@ -174,13 +239,7 @@ function renderTree() {
     }
     node[parts[parts.length - 1]] = f;
   }
-
-  treeEl.innerHTML = '';
-  treeEl.classList.toggle('collapsed', rootCollapsed);
-  buildUl(root, treeEl);
-  if (mdFiles.length > 0 && visibleFiles.length === 0) {
-    treeEl.innerHTML = '<li class="empty">No matching files found.</li>';
-  }
+  return root;
 }
 
 function buildUl(obj, parentUl) {
@@ -193,7 +252,7 @@ function buildUl(obj, parentUl) {
   for (const name of keys) {
     const entry = obj[name];
     const li = document.createElement('li');
-    if (typeof entry.handle === 'undefined') {
+    if (!entry.handle && !entry.file) {
       const folder = document.createElement('div');
       folder.className = 'folder';
       folder.textContent = '📁 ' + name;
@@ -326,39 +385,6 @@ function renderLoading(message) {
   mainEl.innerHTML = '<div class="loading"><span class="spinner" aria-hidden="true"></span><span>' + escapeHtml(message) + '</span></div>';
 }
 
-function renderRootFolder(name) {
-  pathEl.innerHTML = '';
-  pathEl.style.display = 'flex';
-
-  const toggle = document.createElement('span');
-  toggle.className = 'root-toggle';
-  toggle.textContent = '📁 ' + name;
-  toggle.addEventListener('click', () => {
-    rootCollapsed = !rootCollapsed;
-    toggle.classList.toggle('collapsed', rootCollapsed);
-    treeEl.classList.toggle('collapsed', rootCollapsed);
-  });
-
-  const removeBtn = document.createElement('button');
-  removeBtn.className = 'remove-root';
-  removeBtn.type = 'button';
-  removeBtn.textContent = '×';
-  removeBtn.setAttribute('aria-label', 'Remove selected folder');
-  removeBtn.addEventListener('click', () => {
-    dirHandle = null;
-    mdFiles = [];
-    rootCollapsed = false;
-    fileInput.value = '';
-    searchInput.value = '';
-    treeEl.innerHTML = '';
-    treeEl.classList.remove('collapsed');
-    pathEl.style.display = 'none';
-    renderEmpty('<div class="empty"><p>Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</p><p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p></div>');
-  });
-
-  pathEl.appendChild(toggle);
-  pathEl.appendChild(removeBtn);
-}
 </script>
 </body>
 </html>
