@@ -327,7 +327,8 @@ function renderMarkdown(md) {
   let listType = null;
   let inQuote = false;
 
-  for (const raw of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
     const line = raw.trim();
 
     if (/^```/.test(line)) {
@@ -361,6 +362,19 @@ function renderMarkdown(md) {
       html += '<hr>\n';
       continue;
     }
+    if (isTableHeader(line, lines[i + 1])) {
+      closeBlocks();
+      const headers = parseTableRow(line);
+      const rows = [];
+      i += 2;
+      while (i < lines.length && isTableRow(lines[i].trim())) {
+        rows.push(parseTableRow(lines[i].trim()));
+        i++;
+      }
+      i--;
+      html += renderTable(headers, rows);
+      continue;
+    }
     if ((m = line.match(/^&gt;\s?(.*)$/))) {
       if (!inQuote) { html += '<blockquote>\n'; inQuote = true; }
       html += '<p>' + renderInline(m[1]) + '</p>\n';
@@ -392,6 +406,40 @@ function renderMarkdown(md) {
     if (listType) { html += '</' + listType + '>\n'; listType = null; }
     if (inQuote) { html += '</blockquote>\n'; inQuote = false; }
   }
+}
+
+function isTableHeader(line, nextLine) {
+  return isTableRow(line) && typeof nextLine === 'string' && isTableDelimiter(nextLine.trim());
+}
+
+function isTableRow(line) {
+  return line.includes('|') && parseTableRow(line).length > 1;
+}
+
+function isTableDelimiter(line) {
+  if (!isTableRow(line)) return false;
+  return parseTableRow(line).every(cell => /^:?-{3,}:?$/.test(cell));
+}
+
+function parseTableRow(line) {
+  return line.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
+}
+
+function renderTable(headers, rows) {
+  let html = '<table>\n<thead><tr>';
+  for (const header of headers) {
+    html += '<th>' + renderInline(header) + '</th>';
+  }
+  html += '</tr></thead>\n<tbody>\n';
+  for (const row of rows) {
+    html += '<tr>';
+    for (let i = 0; i < headers.length; i++) {
+      html += '<td>' + renderInline(row[i] || '') + '</td>';
+    }
+    html += '</tr>\n';
+  }
+  html += '</tbody>\n</table>\n';
+  return html;
 }
 
 function renderEmpty(htmlContent) {
