@@ -8,21 +8,31 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #f5f6f8; color: #24292f; }
 .sidebar { width: 320px; background: #fff; border-right: 1px solid #e1e4e8; overflow-y: auto; padding: 0 16px 20px; flex-shrink: 0; display: flex; flex-direction: column; }
-.sidebar-header { position: sticky; top: 0; z-index: 2; background: #fff; padding: 20px 0 12px; box-shadow: 0 8px 12px rgba(255,255,255,.95); }
+.sidebar-header { position: sticky; top: 0; z-index: 2; background: #fff; padding: 20px 0 4px; box-shadow: 0 8px 12px rgba(255,255,255,.95); }
 .sidebar h1 { font-size: 18px; margin-bottom: 12px; color: #24292f; }
 .open-btn { width: 100%; padding: 10px; background: #0969da; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
 .open-btn:hover { background: #0b5fbf; }
 .file-input { display: none; }
 .search-input { width: 100%; padding: 9px 10px; border: 1px solid #d0d7de; border-radius: 6px; font-size: 14px; margin-bottom: 12px; outline: none; }
 .search-input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.12); }
-.current-path { font-size: 11px; color: #57606a; word-break: break-all; margin-bottom: 12px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: none; }
+.current-path { font-size: 13px; color: #57606a; word-break: break-all; margin-bottom: 0; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: none; align-items: center; justify-content: space-between; gap: 8px; }
+.root-toggle { flex: 1; min-width: 0; cursor: pointer; user-select: none; font-weight: 600; }
+.root-toggle::before { content: '▾'; display: inline-block; width: 14px; margin-right: 4px; transition: transform .15s ease; }
+.root-toggle.collapsed::before { transform: rotate(-90deg); }
+.remove-root { border: 0; background: transparent; color: #57606a; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 4px; border-radius: 4px; flex-shrink: 0; }
+.remove-root:hover { background: #eaeef2; color: #cf222e; }
 .tree { list-style: none; }
+.tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
 .tree a { color: #24292f; text-decoration: none; font-size: 14px; display: block; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 .tree a:hover { background: #f0f1f3; }
 .tree a.active { background: #0969da; color: #fff; }
-.tree .folder { font-weight: 600; padding: 4px 8px; color: #57606a; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; user-select: none; }
+.tree .folder { font-weight: 600; padding: 4px 8px; color: #57606a; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; user-select: none; cursor: pointer; border-radius: 6px; }
+.tree .folder:hover { background: #f0f1f3; }
+.tree .folder::before { content: '▾'; display: inline-block; width: 14px; margin-right: 4px; transition: transform .15s ease; }
+.tree .folder.collapsed::before { transform: rotate(-90deg); }
 .tree .children { list-style: none; padding-left: 14px; border-left: 1px solid #e1e4e8; margin-left: 10px; }
+.tree .children.collapsed { display: none; }
 .tree .file-icon { opacity: .7; margin-right: 4px; }
 .main { flex: 1; overflow-y: auto; padding: 32px 40px; }
 .empty { color: #57606a; font-size: 16px; max-width: 600px; }
@@ -77,6 +87,7 @@ const pathEl = document.getElementById('currentPath');
 
 let dirHandle = null;
 let mdFiles = []; // { handle?, file?, rel }
+let rootCollapsed = false;
 
 openBtn.addEventListener('click', async () => {
   if (!('showDirectoryPicker' in window)) {
@@ -86,13 +97,16 @@ openBtn.addEventListener('click', async () => {
   }
   try {
     dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+    renderLoading('Reading files...');
     mdFiles = [];
     await walk(dirHandle, '');
-    pathEl.textContent = '📁 ' + dirHandle.name;
-    pathEl.style.display = 'block';
+    rootCollapsed = false;
+    renderRootFolder(dirHandle.name);
     renderTree();
     if (mdFiles.length === 0) {
       renderEmpty('<div class="empty">No <code>.md</code> files found in this folder.</div>');
+    } else {
+      renderEmpty('<div class="empty">Select a markdown file from the sidebar to read it.</div>');
     }
   } catch (e) {
     if (e.name !== 'AbortError') {
@@ -102,6 +116,11 @@ openBtn.addEventListener('click', async () => {
 });
 
 fileInput.addEventListener('change', () => {
+  renderLoading('Reading files...');
+  requestAnimationFrame(readSelectedFiles);
+});
+
+function readSelectedFiles() {
   const files = Array.from(fileInput.files || []);
   mdFiles = files
     .filter(file => file.name.toLowerCase().endsWith('.md'))
@@ -110,13 +129,21 @@ fileInput.addEventListener('change', () => {
       rel: file.webkitRelativePath || file.name
     }));
   dirHandle = null;
-  pathEl.textContent = files.length > 0 ? '📁 Selected files' : '';
-  pathEl.style.display = files.length > 0 ? 'block' : 'none';
+    rootCollapsed = false;
+    if (files.length > 0) {
+      renderRootFolder('Selected files');
+    } else {
+      pathEl.style.display = 'none';
+    }
   renderTree();
-  if (files.length > 0 && mdFiles.length === 0) {
+  if (files.length === 0) {
+    renderEmpty('<div class="empty">Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</div>');
+  } else if (mdFiles.length === 0) {
     renderEmpty('<div class="empty">No <code>.md</code> files found in the selected files.</div>');
+  } else {
+    renderEmpty('<div class="empty">Select a markdown file from the sidebar to read it.</div>');
   }
-});
+}
 
 searchInput.addEventListener('input', renderTree);
 
@@ -149,6 +176,7 @@ function renderTree() {
   }
 
   treeEl.innerHTML = '';
+  treeEl.classList.toggle('collapsed', rootCollapsed);
   buildUl(root, treeEl);
   if (mdFiles.length > 0 && visibleFiles.length === 0) {
     treeEl.innerHTML = '<li class="empty">No matching files found.</li>';
@@ -174,6 +202,10 @@ function buildUl(obj, parentUl) {
       ul.className = 'children';
       buildUl(entry, ul);
       li.appendChild(ul);
+      folder.addEventListener('click', () => {
+        folder.classList.toggle('collapsed');
+        ul.classList.toggle('collapsed');
+      });
     } else {
       const a = document.createElement('a');
       a.textContent = '📄 ' + name;
@@ -288,6 +320,44 @@ function renderMarkdown(md) {
 
 function renderEmpty(htmlContent) {
   mainEl.innerHTML = htmlContent;
+}
+
+function renderLoading(message) {
+  mainEl.innerHTML = '<div class="loading"><span class="spinner" aria-hidden="true"></span><span>' + escapeHtml(message) + '</span></div>';
+}
+
+function renderRootFolder(name) {
+  pathEl.innerHTML = '';
+  pathEl.style.display = 'flex';
+
+  const toggle = document.createElement('span');
+  toggle.className = 'root-toggle';
+  toggle.textContent = '📁 ' + name;
+  toggle.addEventListener('click', () => {
+    rootCollapsed = !rootCollapsed;
+    toggle.classList.toggle('collapsed', rootCollapsed);
+    treeEl.classList.toggle('collapsed', rootCollapsed);
+  });
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-root';
+  removeBtn.type = 'button';
+  removeBtn.textContent = '×';
+  removeBtn.setAttribute('aria-label', 'Remove selected folder');
+  removeBtn.addEventListener('click', () => {
+    dirHandle = null;
+    mdFiles = [];
+    rootCollapsed = false;
+    fileInput.value = '';
+    searchInput.value = '';
+    treeEl.innerHTML = '';
+    treeEl.classList.remove('collapsed');
+    pathEl.style.display = 'none';
+    renderEmpty('<div class="empty"><p>Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</p><p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p></div>');
+  });
+
+  pathEl.appendChild(toggle);
+  pathEl.appendChild(removeBtn);
 }
 </script>
 </body>
