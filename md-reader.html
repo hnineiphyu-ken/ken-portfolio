@@ -9,7 +9,10 @@
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #f5f6f8; color: #24292f; }
 .sidebar { width: 320px; height: 100vh; background: #fff; border-right: 1px solid #e1e4e8; overflow: hidden; padding: 0 16px 14px; flex-shrink: 0; display: flex; flex-direction: column; }
 .sidebar-header { position: sticky; top: 0; z-index: 2; background: #fff; padding: 20px 0 4px; box-shadow: 0 8px 12px rgba(255,255,255,.95); }
-.sidebar h1 { font-size: 18px; margin-bottom: 12px; color: #24292f; }
+.sidebar-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.sidebar h1 { font-size: 18px; color: #24292f; }
+.sidebar-close-btn { width: 28px; height: 28px; border: 0; border-radius: 6px; background: #f6f8fa; color: #57606a; font-size: 18px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+.sidebar-close-btn:hover { background: #eaeef2; color: #cf222e; }
 .open-btn { width: 100%; padding: 10px; background: #0969da; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
 .open-btn:hover { background: #0b5fbf; }
 .open-actions { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -53,7 +56,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .loading { color: #57606a; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 24px 28px; display: inline-flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
 .spinner { width: 18px; height: 18px; border: 3px solid #d0d7de; border-top-color: #0969da; border-radius: 50%; animation: spin .75s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.markdown { background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 32px 40px; max-width: 860px; box-shadow: 0 1px 3px rgba(0,0,0,.04); line-height: 1.7; }
+.markdown { width: 100%; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 32px 40px; box-shadow: 0 1px 3px rgba(0,0,0,.04); line-height: 1.7; }
 .markdown h1, .markdown h2, .markdown h3, .markdown h4 { margin: 28px 0 14px; line-height: 1.25; }
 .markdown h1:first-child { margin-top: 0; }
 .markdown p { margin: 0 0 16px; }
@@ -70,12 +73,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .markdown hr { border: 0; border-top: 1px solid #e1e4e8; margin: 24px 0; }
 .menu-btn { display: none; position: fixed; top: 14px; left: 14px; z-index: 5; width: 42px; height: 42px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; color: #24292f; font-size: 22px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 3; background: rgba(31,35,40,.36); }
+body.sidebar-closed .sidebar { display: none; }
+body.sidebar-closed .menu-btn { display: block; }
+body.sidebar-closed .main { padding: 72px 40px 32px 88px; }
 @media (max-width: 1023px) {
 body { display: block; }
 .menu-btn { display: block; }
 .sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(320px, 86vw); transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
+body.sidebar-closed .sidebar { display: flex; }
 body.sidebar-open .sidebar { transform: translateX(0); }
 body.sidebar-open .sidebar-overlay { display: block; }
+body.sidebar-open .menu-btn { display: none; }
 .main { min-height: 100vh; padding: 72px 18px 28px; }
 .markdown { padding: 24px 20px; }
 }
@@ -86,7 +94,10 @@ body.sidebar-open .sidebar-overlay { display: block; }
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <aside class="sidebar">
   <div class="sidebar-header">
-    <h1>📄 MD Reader</h1>
+    <div class="sidebar-title-row">
+      <h1>📄 MD Reader</h1>
+      <button class="sidebar-close-btn" id="sidebarCloseBtn" type="button" aria-label="Close sidebar">☰</button>
+    </div>
     <div class="open-actions">
       <button class="open-btn" id="openBtn">📂 Folder</button>
       <input class="file-input" id="fileInput" type="file" accept=".md,text/markdown,text/plain" multiple webkitdirectory>
@@ -111,6 +122,7 @@ body.sidebar-open .sidebar-overlay { display: block; }
 const openBtn = document.getElementById('openBtn');
 const openFileBtn = document.getElementById('openFileBtn');
 const menuBtn = document.getElementById('menuBtn');
+const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 const fileInput = document.getElementById('fileInput');
 const singleFileInput = document.getElementById('singleFileInput');
@@ -127,10 +139,15 @@ let selectedFileRel = '';
 let draggedRootId = null;
 
 menuBtn.addEventListener('click', () => {
-  document.body.classList.toggle('sidebar-open');
-  menuBtn.setAttribute('aria-label', document.body.classList.contains('sidebar-open') ? 'Close sidebar' : 'Open sidebar');
+  if (isDrawerMode()) {
+    document.body.classList.toggle('sidebar-open');
+  } else {
+    document.body.classList.toggle('sidebar-closed');
+  }
+  updateMenuButtonLabel();
 });
 
+sidebarCloseBtn.addEventListener('click', closeSidebar);
 sidebarOverlay.addEventListener('click', closeSidebar);
 
 openBtn.addEventListener('click', async () => {
@@ -507,12 +524,28 @@ async function openFile(entry) {
   }
 
   mainEl.innerHTML = '<article class="markdown">' + renderMarkdown(text) + '</article>';
-  closeSidebar();
+  // Keep the file tree visible on desktop; only dismiss the mobile drawer.
+  if (isDrawerMode()) closeSidebar();
 }
 
 function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-  menuBtn.setAttribute('aria-label', 'Open sidebar');
+  if (isDrawerMode()) {
+    document.body.classList.remove('sidebar-open');
+  } else {
+    document.body.classList.add('sidebar-closed');
+  }
+  updateMenuButtonLabel();
+}
+
+function isDrawerMode() {
+  return window.matchMedia('(max-width: 1023px)').matches;
+}
+
+function updateMenuButtonLabel() {
+  const isOpen = isDrawerMode()
+    ? document.body.classList.contains('sidebar-open')
+    : !document.body.classList.contains('sidebar-closed');
+  menuBtn.setAttribute('aria-label', isOpen ? 'Close sidebar' : 'Open sidebar');
 }
 
 /* ---- lightweight markdown renderer ---- */
