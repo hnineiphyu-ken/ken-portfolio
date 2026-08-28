@@ -7,10 +7,12 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #f5f6f8; color: #24292f; }
-.sidebar { width: 320px; background: #fff; border-right: 1px solid #e1e4e8; overflow-y: auto; padding: 20px 16px; flex-shrink: 0; display: flex; flex-direction: column; }
+.sidebar { width: 320px; background: #fff; border-right: 1px solid #e1e4e8; overflow-y: auto; padding: 0 16px 20px; flex-shrink: 0; display: flex; flex-direction: column; }
+.sidebar-header { position: sticky; top: 0; z-index: 2; background: #fff; padding: 20px 0 12px; box-shadow: 0 8px 12px rgba(255,255,255,.95); }
 .sidebar h1 { font-size: 18px; margin-bottom: 12px; color: #24292f; }
 .open-btn { width: 100%; padding: 10px; background: #0969da; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
 .open-btn:hover { background: #0b5fbf; }
+.file-input { display: none; }
 .search-input { width: 100%; padding: 9px 10px; border: 1px solid #d0d7de; border-radius: 6px; font-size: 14px; margin-bottom: 12px; outline: none; }
 .search-input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.12); }
 .current-path { font-size: 11px; color: #57606a; word-break: break-all; margin-bottom: 12px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: none; }
@@ -26,6 +28,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .empty { color: #57606a; font-size: 16px; max-width: 600px; }
 .error { color: #cf222e; background: #ffebe9; border: 1px solid #ffcecb; padding: 12px 16px; border-radius: 6px; font-size: 14px; word-break: break-all; }
 .hint { font-size: 13px; color: #57606a; margin-top: 12px; line-height: 1.6; }
+.loading { color: #57606a; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 24px 28px; display: inline-flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.spinner { width: 18px; height: 18px; border: 3px solid #d0d7de; border-top-color: #0969da; border-radius: 50%; animation: spin .75s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .markdown { background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; padding: 32px 40px; max-width: 860px; box-shadow: 0 1px 3px rgba(0,0,0,.04); line-height: 1.7; }
 .markdown h1, .markdown h2, .markdown h3, .markdown h4 { margin: 28px 0 14px; line-height: 1.25; }
 .markdown h1:first-child { margin-top: 0; }
@@ -45,10 +50,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 </head>
 <body>
 <aside class="sidebar">
-  <h1>📄 MD Reader</h1>
-  <button class="open-btn" id="openBtn">📂 Open Folder</button>
-  <input class="search-input" id="searchInput" type="search" placeholder="Search file name..." aria-label="Search markdown files">
-  <div class="current-path" id="currentPath"></div>
+  <div class="sidebar-header">
+    <h1>📄 MD Reader</h1>
+    <button class="open-btn" id="openBtn">📂 Open Folder</button>
+    <input class="file-input" id="fileInput" type="file" accept=".md,text/markdown,text/plain" multiple webkitdirectory>
+    <input class="search-input" id="searchInput" type="search" placeholder="Search file name..." aria-label="Search markdown files">
+    <div class="current-path" id="currentPath"></div>
+  </div>
   <ul class="tree" id="tree"></ul>
 </aside>
 <main class="main" id="main">
@@ -61,17 +69,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 'use strict';
 
 const openBtn = document.getElementById('openBtn');
+const fileInput = document.getElementById('fileInput');
 const searchInput = document.getElementById('searchInput');
 const treeEl = document.getElementById('tree');
 const mainEl = document.getElementById('main');
 const pathEl = document.getElementById('currentPath');
 
 let dirHandle = null;
-let mdFiles = []; // { handle, rel }
+let mdFiles = []; // { handle?, file?, rel }
 
 openBtn.addEventListener('click', async () => {
   if (!('showDirectoryPicker' in window)) {
-    renderEmpty('<div class="error">This browser doesn\'t support folder selection. Please use Chrome or Edge.</div>');
+    fileInput.value = '';
+    fileInput.click();
     return;
   }
   try {
@@ -88,6 +98,23 @@ openBtn.addEventListener('click', async () => {
     if (e.name !== 'AbortError') {
       renderEmpty('<div class="error">Could not open folder: ' + escapeHtml(String(e)) + '</div>');
     }
+  }
+});
+
+fileInput.addEventListener('change', () => {
+  const files = Array.from(fileInput.files || []);
+  mdFiles = files
+    .filter(file => file.name.toLowerCase().endsWith('.md'))
+    .map(file => ({
+      file,
+      rel: file.webkitRelativePath || file.name
+    }));
+  dirHandle = null;
+  pathEl.textContent = files.length > 0 ? '📁 Selected files' : '';
+  pathEl.style.display = files.length > 0 ? 'block' : 'none';
+  renderTree();
+  if (files.length > 0 && mdFiles.length === 0) {
+    renderEmpty('<div class="empty">No <code>.md</code> files found in the selected files.</div>');
   }
 });
 
@@ -151,28 +178,22 @@ function buildUl(obj, parentUl) {
       const a = document.createElement('a');
       a.textContent = '📄 ' + name;
       a.dataset.rel = entry.rel;
-      a.addEventListener('click', () => openFile(entry.handle));
+      a.addEventListener('click', () => openFile(entry));
       li.appendChild(a);
     }
     parentUl.appendChild(li);
   }
 }
 
-async function openFile(handle) {
-  if (typeof handle.getFile !== 'function') return;
-  const file = await handle.getFile();
+async function openFile(entry) {
+  mainEl.innerHTML = '<div class="loading"><span class="spinner" aria-hidden="true"></span><span>Reading file...</span></div>';
+  const file = entry.file || await entry.handle.getFile();
   const text = await file.text();
   document.querySelectorAll('.tree a').forEach(a => a.classList.remove('active'));
-  const link = Array.from(document.querySelectorAll('.tree a')).find(a => a.dataset.rel === mdRel(handle));
+  const link = Array.from(document.querySelectorAll('.tree a')).find(a => a.dataset.rel === entry.rel);
   if (link) link.classList.add('active');
 
-  const root = document.getElementById('currentPath');
   mainEl.innerHTML = '<article class="markdown">' + renderMarkdown(text) + '</article>';
-}
-
-function mdRel(handle) {
-  for (const f of mdFiles) if (f.handle === handle) return f.rel;
-  return '';
 }
 
 /* ---- lightweight markdown renderer ---- */
