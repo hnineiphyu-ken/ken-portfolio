@@ -12,6 +12,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .sidebar h1 { font-size: 18px; margin-bottom: 12px; color: #24292f; }
 .open-btn { width: 100%; padding: 10px; background: #0969da; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
 .open-btn:hover { background: #0b5fbf; }
+.open-file-btn { background: #57606a; }
+.open-file-btn:hover { background: #424a53; }
 .file-input { display: none; }
 .search-input { width: 100%; padding: 9px 10px; border: 1px solid #d0d7de; border-radius: 6px; font-size: 14px; margin-bottom: 12px; outline: none; }
 .search-input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.12); }
@@ -26,6 +28,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .tree li { margin: 2px 0; }
 .tree .root-row { font-size: 13px; color: #57606a; word-break: break-all; margin: 8px 0 4px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .tree .root-row.selected { background: #e7f2ff; color: #075985; border: 1px solid #b6d7f5; }
+.tree .single-file-row a { flex: 1; min-width: 0; }
 .tree a { color: #24292f; text-decoration: none; font-size: 14px; display: block; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 .tree a:hover { background: #f0f1f3; }
 .tree a.active { background: #0969da; color: #fff; }
@@ -81,6 +84,8 @@ body.sidebar-open .sidebar-overlay { display: block; }
     <h1>📄 MD Reader</h1>
     <button class="open-btn" id="openBtn">📂 Open Folder</button>
     <input class="file-input" id="fileInput" type="file" accept=".md,text/markdown,text/plain" multiple webkitdirectory>
+    <button class="open-btn open-file-btn" id="openFileBtn">📄 Open File</button>
+    <input class="file-input" id="singleFileInput" type="file" accept=".md,text/markdown,text/plain" multiple>
     <input class="search-input" id="searchInput" type="search" placeholder="Search file name..." aria-label="Search markdown files">
     <div class="current-path" id="currentPath"></div>
   </div>
@@ -97,9 +102,11 @@ body.sidebar-open .sidebar-overlay { display: block; }
 'use strict';
 
 const openBtn = document.getElementById('openBtn');
+const openFileBtn = document.getElementById('openFileBtn');
 const menuBtn = document.getElementById('menuBtn');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 const fileInput = document.getElementById('fileInput');
+const singleFileInput = document.getElementById('singleFileInput');
 const searchInput = document.getElementById('searchInput');
 const treeEl = document.getElementById('tree');
 const mainEl = document.getElementById('main');
@@ -148,6 +155,16 @@ fileInput.addEventListener('change', () => {
   requestAnimationFrame(readSelectedFiles);
 });
 
+openFileBtn.addEventListener('click', () => {
+  singleFileInput.value = '';
+  singleFileInput.click();
+});
+
+singleFileInput.addEventListener('change', () => {
+  renderLoading('Reading files...');
+  requestAnimationFrame(readChosenFiles);
+});
+
 function readSelectedFiles() {
   const files = Array.from(fileInput.files || []);
   const markdownFiles = files
@@ -163,6 +180,27 @@ function readSelectedFiles() {
   renderTree();
   if (files.length === 0) {
     renderEmpty('<div class="empty">Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</div>');
+  } else if (markdownFiles.length === 0) {
+    renderEmpty('<div class="empty">No <code>.md</code> files found in the selected files.</div>');
+  } else {
+    renderEmpty('<div class="empty">Select a markdown file from the sidebar to read it.</div>');
+  }
+}
+
+function readChosenFiles() {
+  const files = Array.from(singleFileInput.files || []);
+  const markdownFiles = files
+    .filter(file => file.name.toLowerCase().endsWith('.md'))
+    .map(file => ({ file, rel: file.name }));
+
+  if (markdownFiles.length === 1) {
+    addSingleFile(markdownFiles[0]);
+  } else if (markdownFiles.length > 1) {
+    addRoot(markdownFiles.length === 1 ? markdownFiles[0].rel : 'Selected files', markdownFiles);
+  }
+  renderTree();
+  if (files.length === 0) {
+    renderEmpty('<div class="empty">Click <strong>Open File</strong> and choose one or more <code>.md</code> files.</div>');
   } else if (markdownFiles.length === 0) {
     renderEmpty('<div class="empty">No <code>.md</code> files found in the selected files.</div>');
   } else {
@@ -217,7 +255,24 @@ function addRoot(name, files) {
   pathEl.style.display = 'none';
 }
 
+function addSingleFile(file) {
+  const id = nextRootId++;
+  roots.push({
+    id,
+    name: file.rel,
+    files: [{ ...file, rootId: id }],
+    collapsed: false,
+    singleFile: true
+  });
+  pathEl.style.display = 'none';
+}
+
 function buildRoot(root, files, parentUl) {
+  if (root.singleFile) {
+    buildSingleFileRoot(root, files[0], parentUl);
+    return;
+  }
+
   const li = document.createElement('li');
   const row = document.createElement('div');
   row.className = 'root-row';
@@ -254,6 +309,7 @@ function buildRoot(root, files, parentUl) {
     if (roots.length === 0) {
       dirHandle = null;
       fileInput.value = '';
+      singleFileInput.value = '';
       searchInput.value = '';
       selectedRootId = null;
       selectedFileRel = '';
@@ -265,6 +321,49 @@ function buildRoot(root, files, parentUl) {
   row.appendChild(removeBtn);
   li.appendChild(row);
   li.appendChild(ul);
+  parentUl.appendChild(li);
+}
+
+function buildSingleFileRoot(root, entry, parentUl) {
+  if (!entry) return;
+
+  const li = document.createElement('li');
+  const row = document.createElement('div');
+  row.className = 'root-row single-file-row';
+  row.dataset.rootId = String(root.id);
+  row.classList.toggle('selected', root.id === selectedRootId);
+
+  const link = document.createElement('a');
+  link.textContent = '📄 ' + entry.rel;
+  link.dataset.rel = entry.rel;
+  link.dataset.rootId = String(entry.rootId);
+  link.classList.toggle('active', entry.rootId === selectedRootId && entry.rel === selectedFileRel);
+  link.addEventListener('click', () => openFile(entry));
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-root';
+  removeBtn.type = 'button';
+  removeBtn.textContent = '×';
+  removeBtn.setAttribute('aria-label', 'Remove selected file');
+  removeBtn.addEventListener('click', () => {
+    roots = roots.filter(item => item.id !== root.id);
+    if (selectedRootId === root.id) {
+      selectedRootId = null;
+      selectedFileRel = '';
+    }
+    renderTree();
+    if (roots.length === 0) {
+      dirHandle = null;
+      fileInput.value = '';
+      singleFileInput.value = '';
+      searchInput.value = '';
+      renderEmpty('<div class="empty"><p>Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</p><p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p></div>');
+    }
+  });
+
+  row.appendChild(link);
+  row.appendChild(removeBtn);
+  li.appendChild(row);
   parentUl.appendChild(li);
 }
 
