@@ -12,6 +12,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .sidebar h1 { font-size: 18px; margin-bottom: 12px; color: #24292f; }
 .open-btn { width: 100%; padding: 10px; background: #0969da; color: #fff; border: 0; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
 .open-btn:hover { background: #0b5fbf; }
+.open-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.open-actions .open-btn { flex: 1; width: auto; margin-bottom: 0; padding: 10px 8px; }
 .open-file-btn { background: #57606a; }
 .open-file-btn:hover { background: #424a53; }
 .file-input { display: none; }
@@ -27,7 +29,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
 .tree .root-item.dragging { opacity: .55; }
-.tree .root-item.drag-over > .root-row { outline: 2px solid #0969da; outline-offset: 2px; }
+.tree .root-item.drop-before { border-top: 3px solid #0969da; padding-top: 3px; }
+.tree .root-item.drop-after { border-bottom: 3px solid #0969da; padding-bottom: 3px; }
 .tree .root-row { font-size: 13px; color: #57606a; word-break: break-all; margin: 8px 0 4px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .tree .root-row.selected { background: #e7f2ff; color: #075985; border: 1px solid #b6d7f5; }
 .tree .single-file-row a { flex: 1; min-width: 0; }
@@ -84,10 +87,12 @@ body.sidebar-open .sidebar-overlay { display: block; }
 <aside class="sidebar">
   <div class="sidebar-header">
     <h1>📄 MD Reader</h1>
-    <button class="open-btn" id="openBtn">📂 Open Folder</button>
-    <input class="file-input" id="fileInput" type="file" accept=".md,text/markdown,text/plain" multiple webkitdirectory>
-    <button class="open-btn open-file-btn" id="openFileBtn">📄 Open File</button>
-    <input class="file-input" id="singleFileInput" type="file" accept=".md,text/markdown,text/plain" multiple>
+    <div class="open-actions">
+      <button class="open-btn" id="openBtn">📂 Folder</button>
+      <input class="file-input" id="fileInput" type="file" accept=".md,text/markdown,text/plain" multiple webkitdirectory>
+      <button class="open-btn open-file-btn" id="openFileBtn">📄 File</button>
+      <input class="file-input" id="singleFileInput" type="file" accept=".md,text/markdown,text/plain" multiple>
+    </div>
     <input class="search-input" id="searchInput" type="search" placeholder="Search file name..." aria-label="Search markdown files">
     <div class="current-path" id="currentPath"></div>
   </div>
@@ -389,27 +394,31 @@ function enableRootDrag(handle, item, rootId) {
   item.addEventListener('dragover', event => {
     if (draggedRootId === null || draggedRootId === rootId) return;
     event.preventDefault();
-    item.classList.add('drag-over');
+    const rect = item.getBoundingClientRect();
+    const isAfter = event.clientY > rect.top + rect.height / 2;
+    item.classList.toggle('drop-before', !isAfter);
+    item.classList.toggle('drop-after', isAfter);
   });
 
   item.addEventListener('dragleave', () => {
-    item.classList.remove('drag-over');
+    item.classList.remove('drop-before', 'drop-after');
   });
 
   item.addEventListener('drop', event => {
     event.preventDefault();
-    item.classList.remove('drag-over');
-    moveRoot(draggedRootId, rootId);
+    const insertAfter = item.classList.contains('drop-after');
+    item.classList.remove('drop-before', 'drop-after');
+    moveRoot(draggedRootId, rootId, insertAfter);
     draggedRootId = null;
   });
 
   handle.addEventListener('dragend', () => {
     draggedRootId = null;
-    document.querySelectorAll('.root-item').forEach(rootItem => rootItem.classList.remove('dragging', 'drag-over'));
+    document.querySelectorAll('.root-item').forEach(rootItem => rootItem.classList.remove('dragging', 'drop-before', 'drop-after'));
   });
 }
 
-function moveRoot(fromId, toId) {
+function moveRoot(fromId, toId, insertAfter) {
   if (fromId === null || fromId === toId) return;
 
   const fromIndex = roots.findIndex(root => root.id === fromId);
@@ -417,7 +426,8 @@ function moveRoot(fromId, toId) {
   if (fromIndex === -1 || toIndex === -1) return;
 
   const [root] = roots.splice(fromIndex, 1);
-  roots.splice(toIndex, 0, root);
+  const adjustedToIndex = roots.findIndex(item => item.id === toId);
+  roots.splice(insertAfter ? adjustedToIndex + 1 : adjustedToIndex, 0, root);
   renderTree();
 }
 
