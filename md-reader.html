@@ -25,12 +25,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
 .tree .root-row { font-size: 13px; color: #57606a; word-break: break-all; margin: 8px 0 4px; padding: 6px 8px; background: #f6f8fa; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.tree .root-row.selected { background: #ddf4ff; color: #0969da; }
+.tree .root-row.selected { background: #e7f2ff; color: #075985; border: 1px solid #b6d7f5; }
 .tree a { color: #24292f; text-decoration: none; font-size: 14px; display: block; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
 .tree a:hover { background: #f0f1f3; }
 .tree a.active { background: #0969da; color: #fff; }
 .tree .folder { font-weight: 600; padding: 4px 8px; color: #57606a; font-size: 13px; text-transform: uppercase; letter-spacing: .03em; user-select: none; cursor: pointer; border-radius: 6px; }
 .tree .folder:hover { background: #f0f1f3; }
+.tree .folder.selected-parent { background: #f0f7ff; color: #2563eb; }
 .tree .folder::before { content: '▾'; display: inline-block; width: 14px; margin-right: 4px; transition: transform .15s ease; }
 .tree .folder.collapsed::before { transform: rotate(-90deg); }
 .tree .children { list-style: none; padding-left: 14px; border-left: 1px solid #e1e4e8; margin-left: 10px; }
@@ -93,6 +94,7 @@ let dirHandle = null;
 let roots = []; // { id, name, files, collapsed }
 let nextRootId = 1;
 let selectedRootId = null;
+let selectedFileRel = '';
 
 openBtn.addEventListener('click', async () => {
   if (!('showDirectoryPicker' in window)) {
@@ -214,7 +216,7 @@ function buildRoot(root, files, parentUl) {
   const ul = document.createElement('ul');
   ul.className = 'children';
   ul.classList.toggle('collapsed', root.collapsed);
-  buildUl(buildFileTree(files), ul);
+  buildUl(buildFileTree(files), ul, root.id);
 
   toggle.addEventListener('click', () => {
     root.collapsed = !root.collapsed;
@@ -225,12 +227,14 @@ function buildRoot(root, files, parentUl) {
   removeBtn.addEventListener('click', () => {
     roots = roots.filter(item => item.id !== root.id);
     if (selectedRootId === root.id) selectedRootId = null;
+    if (selectedRootId === null) selectedFileRel = '';
     renderTree();
     if (roots.length === 0) {
       dirHandle = null;
       fileInput.value = '';
       searchInput.value = '';
       selectedRootId = null;
+      selectedFileRel = '';
       renderEmpty('<div class="empty"><p>Click <strong>Open Folder</strong> and pick a folder to browse its <code>.md</code> files.</p><p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p></div>');
     }
   });
@@ -256,7 +260,7 @@ function buildFileTree(files) {
   return root;
 }
 
-function buildUl(obj, parentUl) {
+function buildUl(obj, parentUl, rootId, prefix = '') {
   const keys = Object.keys(obj).sort((a, b) => {
     const aDir = typeof obj[a].handle === 'undefined';
     const bDir = typeof obj[b].handle === 'undefined';
@@ -267,13 +271,17 @@ function buildUl(obj, parentUl) {
     const entry = obj[name];
     const li = document.createElement('li');
     if (!entry.handle && !entry.file) {
+      const folderPath = prefix ? prefix + '/' + name : name;
       const folder = document.createElement('div');
       folder.className = 'folder';
+      folder.dataset.rootId = String(rootId);
+      folder.dataset.path = folderPath;
+      folder.classList.toggle('selected-parent', rootId === selectedRootId && selectedFileRel.startsWith(folderPath + '/'));
       folder.textContent = '📁 ' + name;
       li.appendChild(folder);
       const ul = document.createElement('ul');
       ul.className = 'children';
-      buildUl(entry, ul);
+      buildUl(entry, ul, rootId, folderPath);
       li.appendChild(ul);
       folder.addEventListener('click', () => {
         folder.classList.toggle('collapsed');
@@ -296,10 +304,22 @@ async function openFile(entry) {
   const file = entry.file || await entry.handle.getFile();
   const text = await file.text();
   selectedRootId = entry.rootId;
+  selectedFileRel = entry.rel;
   document.querySelectorAll('.tree a').forEach(a => a.classList.remove('active'));
+  document.querySelectorAll('.tree .folder').forEach(folder => folder.classList.remove('selected-parent'));
   document.querySelectorAll('.tree .root-row').forEach(row => row.classList.toggle('selected', row.dataset.rootId === String(selectedRootId)));
   const link = Array.from(document.querySelectorAll('.tree a')).find(a => a.dataset.rel === entry.rel && a.dataset.rootId === String(entry.rootId));
-  if (link) link.classList.add('active');
+  if (link) {
+    link.classList.add('active');
+    let parent = link.parentElement;
+    while (parent && parent !== treeEl) {
+      if (parent.classList.contains('children')) {
+        const folder = parent.previousElementSibling;
+        if (folder && folder.classList.contains('folder')) folder.classList.add('selected-parent');
+      }
+      parent = parent.parentElement;
+    }
+  }
 
   mainEl.innerHTML = '<article class="markdown">' + renderMarkdown(text) + '</article>';
 }
