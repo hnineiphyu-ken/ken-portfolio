@@ -1,0 +1,7 @@
+RewriteEngine On
+
+RewriteRule ^(laptop-svg|md-reader)/$ /$1 [R=301,L]
+
+RewriteRule ^$ index.html [L]
+RewriteRule ^laptop-svg$ laptop-svg.html [L]
+RewriteRule ^md-reader$ md-reader.html [L]

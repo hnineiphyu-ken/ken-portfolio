@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/laptop-svg", "destination": "/laptop-svg.html" },
+    { "source": "/md-reader", "destination": "/md-reader.html" }
+  ]
+}
