@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Reader</title>
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-light.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #24292f;
+      background: #f6f8fa;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: #24292f;
+      color: #fff;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    header input[type="text"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      color: #24292f;
+    }
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background: #2ea44f;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    button.secondary { background: #57606a; }
+    #path-status { font-size: 12px; color: #9da5b4; cursor: pointer; }
+
+    .layout { display: flex; flex: 1; min-height: 0; }
+    #file-list {
+      width: 260px;
+      min-width: 180px;
+      background: #fff;
+      border-right: 1px solid #d0d7de;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    #file-list .folder {
+      font-size: 12px;
+      color: #57606a;
+      font-weight: 600;
+      padding: 10px 8px 2px;
+      margin-top: 4px;
+      border-bottom: 1px solid #eee;
+    }
+    #file-list .file {
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #file-list .file:hover { background: #f0f3f6; }
+    #file-list .file.selected { background: #ddf4ff; color: #0969da; font-weight: 600; }
+    #file-list .empty { padding: 16px; color: #57606a; font-size: 13px; text-align: center; }
+
+    #preview {
+      flex: 1;
+      overflow-y: auto;
+      background: #fff;
+      padding: 12px 24px;
+    }
+    .markdown-body { max-width: 900px; margin: 0 auto; }
+    #editor {
+      width: 100%;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+    heading-row { display: none; }
+    main { display: flex; flex: 1; min-height: 0; }
+    #loading { padding: 40px; text-align: center; color: #57606a; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Markdown Reader</h1>
+    <button id="pick-folder" title="Select a folder containing .md files">Pick Folder</button>
+    <button id="refresh" class="secondary" title="Reload file list">Refresh</button>
+    <input type="text" id="filter" placeholder="Filter files...">
+    <span id="path-status"></span>
+  </header>
+
+  <div class="layout">
+    <div id="file-list"></div>
+    <main>
+      <div id="loading">No folder selected. Click <b>Pick Folder</b> to begin.</div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script>
+    const fileListEl = document.getElementById('file-list');
+    const mainEl = document.querySelector('main');
+    const pickBtn = document.getElementById('pick-folder');
+    const refreshBtn = document.getElementById('refresh');
+    const filterEl = document.getElementById('filter');
+    const pathStatusEl = document.getElementById('path-status');
+
+    let mdFiles = [];          // { name, path, handle }
+    let currentPath = null;    // currently open file path
+    let currentDir = null;     // stored directory handle for refresh
+
+    marked.setOptions({ gfm: true, breaks: true });
+
+    // ---- Folder picking (File System Access API) ----
+    async function pickFolder() {
+      if (!window.showDirectoryPicker) {
+        fallbackPicker(); // not a Chromium browser
+        return;
+      }
+      try {
+        const dir = await window.showDirectoryPicker({ mode: 'read' });
+        await scanFolder(dir);
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // user cancelled
+        // API exists but failed (rare). Show a message instead of re-prompting.
+        pathStatusEl.textContent = 'Could not open that folder: ' + e.message;
+      }
+    }
+
+    // ---- Fallback: use a hidden <input type=file> (works in ALL browsers) ----
+    function fallbackPicker() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.md,.markdown';
+      input.multiple = true;
+      input.addEventListener('change', () => {
+        const found = [...input.files].filter(f => /\.md$/i.test(f.name))
+          .map(f => ({ name: f.name, path: f.name, handle: f, fallback: true }));
+        found.sort((a, b) => a.name.localeCompare(b.name));
+        mdFiles = found;
+        currentDir = null;
+        pathStatusEl.textContent = 'Loaded ' + mdFiles.length + ' .md files (file picker)';
+        renderFileList();
+      });
+      // Open synchronously so popup blockers don't block it.
+      input.click();
+    }
+
+    async function scanFolder(dirHandle) {
+      currentDir = dirHandle;
+      pathStatusEl.textContent = 'Reading folder...';
+      const found = [];
+      let skipped = 0;
+      const walk = async (handle, prefix) => {
+        try {
+          for await (const entry of handle.values()) {
+            if (entry.kind === 'file') {
+              if (entry.name.toLowerCase().endsWith('.md')) {
+                const path = prefix ? prefix + '/' + entry.name : entry.name;
+                found.push({ name: entry.name, path: path, handle: entry });
+              }
+            } else if (entry.kind === 'directory') {
+              await walk(entry, prefix ? prefix + '/' + entry.name : entry.name);
+            }
+          }
+        } catch (err) {
+          skipped++;
+        }
+      };
+      await walk(dirHandle, '');
+      found.sort((a, b) => a.path.localeCompare(b.path));
+      mdFiles = found;
+      currentDir = dirHandle;
+      pathStatusEl.textContent = '📁 ' + dirHandle.name;
+      pathStatusEl.title = dirHandle.name +
+        (found.length ? ' (' + found.length + ' .md files)' : '') +
+        (skipped ? ' — ' + skipped + ' folder(s) unreadable' : '');
+      renderFileList();
+    }
+
+    // ---- Review section removed ----
+    // ---- Render the sidebar list with filter ----
+    function renderFileList() {
+      fileListEl.innerHTML = '';
+      if (!mdFiles.length) {
+        fileListEl.innerHTML = '<div class="empty">No .md files found.</div>';
+        return;
+      }
+      const q = filterEl.value.trim().toLowerCase();
+      let filtered = q ? mdFiles.filter(f => f.path.toLowerCase().includes(q)) : mdFiles;
+
+      // Group files by folder (tree style, like VS Code).
+      const groups = new Map();            // folderPath -> array of files
+      const roots = [];                     // top-level folders in order
+      filtered.forEach(f => {
+        const slash = f.path.lastIndexOf('/');
+        const folder = slash === -1 ? '' : f.path.slice(0, slash);
+        if (!groups.has(folder)) {
+          groups.set(folder, []);
+          roots.push(folder);
+        }
+        groups.get(folder).push(f);
+      });
+      // Keep folders sorted, '' (root) first.
+      roots.sort((a, b) => {
+        if (a === '') return -1;
+        if (b === '') return 1;
+        return a.localeCompare(b);
+      });
+
+      roots.forEach(folder => {
+        const entries = groups.get(folder);
+        entries.sort((a, b) => a.name.localeCompare(b.name));
+
+        if (folder !== '') {
+          const fh = document.createElement('div');
+          fh.className = 'folder';
+          fh.textContent = '📁 ' + folder;
+          fileListEl.appendChild(fh);
+        }
+        entries.forEach(f => {
+          const div = document.createElement('div');
+          div.className = 'file' + (f.path === currentPath ? ' selected' : '');
+          div.textContent = f.name;
+          div.title = f.path;
+          div.addEventListener('click', () => openFile(f));
+          fileListEl.appendChild(div);
+        });
+      });
+    }
+
+    // ---- Open and render a file ----
+    async function openFile(f) {
+      currentPath = f.path;
+      renderFileList();
+      mainEl.innerHTML = '<div id="loading">Loading...</div>';
+      try {
+        const text = await readFile(f);
+        const html = marked.parse(text);
+        const title = f.name.replace(/\.md$/i, '');
+        mainEl.innerHTML =
+          '<div class="markdown-body"><h1>' + escapeHtml(title) + '</h1><hr>' + html + '</div>';
+      } catch (err) {
+        mainEl.innerHTML = '<div id="loading">Error reading file: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    async function readFile(f) {
+      if (f.fallback) {
+        return await f.handle.text();
+      }
+      const file = await f.handle.getFile();
+      return await file.text();
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ---- Wire up events ----
+    pickBtn.addEventListener('click', pickFolder);
+    refreshBtn.addEventListener('click', async () => {
+      if (currentDir) {
+        await scanFolder(currentDir);
+      } else {
+        pathStatusEl.textContent = 'No folder to refresh. Pick a folder first.';
+      }
+    });
+    filterEl.addEventListener('input', renderFileList);
+  </script>
+</body>
+</html>
