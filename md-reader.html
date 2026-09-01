@@ -71,6 +71,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .markdown th, .markdown td { border: 1px solid #d0d7de; padding: 6px 12px; }
 .markdown img { max-width: 100%; }
 .markdown hr { border: 0; border-top: 1px solid #e1e4e8; margin: 24px 0; }
+.markdown del { color: #57606a; }
+.markdown img { max-width: 100%; height: auto; border-radius: 6px; margin: 8px 0; }
+.markdown .task-list { list-style: none; padding-left: 4px; }
+.markdown .task-list li { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; }
+.markdown .task-list input[type="checkbox"] { margin-top: 5px; accent-color: #0969da; flex-shrink: 0; }
+.markdown .footnotes { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e1e4e8; font-size: 14px; color: #57606a; }
+.markdown .footnotes h2 { font-size: 16px; margin-bottom: 8px; }
+.markdown .footnotes ol { padding-left: 24px; }
+.markdown .footnotes li { margin: 4px 0; }
+.markdown .footnote-ref { font-size: 12px; vertical-align: super; color: #0969da; text-decoration: none; }
+.markdown .footnote-ref:hover { text-decoration: underline; }
+.markdown .mermaid { background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 8px; padding: 16px; margin: 0 0 16px; text-align: center; overflow-x: auto; }
+.markdown .mermaid svg { max-width: 100%; }
+.markdown .mermaid-error { color: #cf222e; background: #ffebe9; border-color: #ffcecb; text-align: left; white-space: pre-wrap; }
 .menu-btn { display: none; position: fixed; top: 14px; left: 14px; z-index: 5; width: 42px; height: 42px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; color: #24292f; font-size: 22px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .sidebar-overlay { display: none; position: fixed; inset: 0; z-index: 3; background: rgba(31,35,40,.36); }
 body.sidebar-closed .sidebar { display: none; }
@@ -116,6 +130,7 @@ body.sidebar-open .menu-btn { display: none; }
     <p class="hint">Works best in Chrome or Edge. Files are read directly from disk in your browser — nothing is uploaded.</p>
   </div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
 'use strict';
 
@@ -137,6 +152,7 @@ let nextRootId = 1;
 let selectedRootId = null;
 let selectedFileRel = '';
 let draggedRootId = null;
+let mermaidInitialized = false;
 
 menuBtn.addEventListener('click', () => {
   if (isDrawerMode()) {
@@ -524,8 +540,43 @@ async function openFile(entry) {
   }
 
   mainEl.innerHTML = '<article class="markdown">' + renderMarkdown(text) + '</article>';
+  await renderMermaidDiagrams();
   // Keep the file tree visible on desktop; only dismiss the mobile drawer.
   if (isDrawerMode()) closeSidebar();
+}
+
+async function renderMermaidDiagrams() {
+  const nodes = Array.from(document.querySelectorAll('.markdown .mermaid'));
+  if (nodes.length === 0) return;
+
+  if (typeof window.mermaid === 'undefined') {
+    nodes.forEach(node => {
+      node.classList.add('mermaid-error');
+      node.textContent = 'Mermaid could not be loaded. Check your internet connection and reload the page.\n\n' + node.textContent;
+    });
+    return;
+  }
+
+  if (!mermaidInitialized) {
+    window.mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default'
+    });
+    mermaidInitialized = true;
+  }
+
+  // Render separately so one invalid diagram does not prevent the others.
+  for (const node of nodes) {
+    const source = node.textContent;
+    try {
+      node.removeAttribute('data-processed');
+      await window.mermaid.run({ nodes: [node] });
+    } catch (error) {
+      node.removeAttribute('data-processed');
+      node.classList.add('mermaid-error');
+      node.textContent = 'Mermaid diagram error: ' + (error.message || String(error)) + '\n\n' + source;
+    }
+  }
 }
 
 function closeSidebar() {
@@ -553,23 +604,68 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function closeList(listType) {
+  return listType && listType !== 'task' ? '</' + listType + '>' : listType === 'task' ? '</ul>' : '';
+}
+
 function renderInline(text) {
   text = escapeHtml(text);
+  // Escaped characters: pull them aside so later patterns don't process them
+  const esc = [];
+  text = text.replace(/\\([\\`*_~\[\]#+\-.!<>()|])/g, (m, c) => {
+    esc.push(c);
+    return '\u0000' + (esc.length - 1) + '\u0000';
+  });
+  // Inline code (before other inline markup)
   text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Images (must run before links): ![alt](url), optional title
+  text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, '<img src="$2" alt="$1" title="$3">');
+  // Footnote references: [^n]
+  text = text.replace(/\[\^([^\]]+)\](?!\s*:)/g, '<a class="footnote-ref" href="#fn-$1" id="fnref-$1">$1</a>');
+  // Bold
   text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Strikethrough
+  text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  // Italic
   text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Links
   text = text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
+  // Restore escaped characters
+  text = text.replace(/\u0000(\d+)\u0000/g, (m, i) => esc[+i] === '\\' ? '&#92;' : esc[+i]);
   return text;
+}
+
+function normalizeMermaidSource(source) {
+  const firstLine = source.split('\n').find(line => line.trim() !== '') || '';
+  if (!/^erDiagram\b/i.test(firstLine.trim())) return source;
+
+  // Mermaid requires combined ER attribute keys to be comma-separated:
+  // `bigint user_id PK FK` -> `bigint user_id PK, FK`.
+  return source.replace(/\b(PK|FK|UK)(?:\s+(PK|FK|UK))+/g, match =>
+    match.trim().split(/\s+/).join(', ')
+  );
 }
 
 function renderMarkdown(md) {
   md = md.replace(/\r\n|\r/g, '\n');
+
+  // Also support files that contain Mermaid source directly, without a
+  // ```mermaid fence. This is useful for exported ERD files whose first
+  // meaningful line is `erDiagram`.
+  const firstMeaningfulLine = md.split('\n').find(line => line.trim() !== '');
+  if (firstMeaningfulLine && /^(?:erDiagram|flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|journey|gantt|pie|gitGraph|mindmap|timeline|quadrantChart|xychart-beta|sankey-beta|block-beta|packet-beta|architecture-beta)\b/i.test(firstMeaningfulLine.trim())) {
+    return '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(md)) + '</div>\n';
+  }
+
   const lines = md.split('\n');
   let html = '';
   let inCode = false;
   let codeLines = [];
   let listType = null;
   let inQuote = false;
+  let footnotes = {};
+  let footnoteKeys = [];
+  let currentLang = '';
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -577,25 +673,46 @@ function renderMarkdown(md) {
 
     if (/^```/.test(line)) {
       if (inCode) {
-        html += '<pre><code>' + codeLines.join('\n') + '</code></pre>\n';
+        const lang = currentLang || '';
+        const isMermaid = lang.trim().toLowerCase() === 'mermaid';
+        if (isMermaid) {
+          html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
+        } else {
+          html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+        }
         codeLines = [];
+        currentLang = '';
         inCode = false;
       } else {
+        currentLang = line.replace(/^```/, '').trim();
         inCode = true;
       }
       continue;
     }
     if (inCode) {
-      codeLines.push(escapeHtml(raw));
+      codeLines.push(raw);
+      continue;
+    }
+    // Embedded HTML block passthrough (e.g. <div>, <details>, custom tags)
+    if (/^\s*<\/?[a-zA-Z][^>]*>\s*$/.test(line)) {
+      if (listType) { html += closeList(listType) + '\n'; listType = null; }
+      if (inQuote) { html += '</blockquote>\n'; inQuote = false; }
+      html += raw + '\n';
       continue;
     }
     if (line === '') {
-      if (listType) { html += '</' + listType + '>\n'; listType = null; }
+      if (listType) { html += closeList(listType) + '\n'; listType = null; }
       if (inQuote) { html += '</blockquote>\n'; inQuote = false; }
       continue;
     }
 
     let m;
+    if ((m = line.match(/^\[\^([^\]]+)\]:\s*(.+)$/))) {
+      const key = m[1];
+      footnotes[key] = m[2];
+      footnoteKeys.push(key);
+      continue;
+    }
     if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
       closeBlocks();
       html += '<h' + m[1].length + '>' + renderInline(m[2]) + '</h' + m[1].length + '>\n';
@@ -619,19 +736,27 @@ function renderMarkdown(md) {
       html += renderTable(headers, rows);
       continue;
     }
-    if ((m = line.match(/^&gt;\s?(.*)$/))) {
+    if ((m = line.match(/^>\s?(.*)$/))) {
       if (!inQuote) { html += '<blockquote>\n'; inQuote = true; }
       html += '<p>' + renderInline(m[1]) + '</p>\n';
       continue;
     }
+    // Task lists (before regular lists)
+    if ((m = line.match(/^[-*+]\s+\[([ xX])\]\s+(.*)$/))) {
+      if (listType && listType !== 'task') { html += closeList(listType); listType = null; }
+      if (listType !== 'task') { html += '<ul class="task-list">\n'; listType = 'task'; }
+      const checked = m[1].toLowerCase() === 'x' ? ' checked' : '';
+      html += '<li><input type="checkbox"' + checked + ' disabled><span>' + renderInline(m[2]) + '</span></li>\n';
+      continue;
+    }
     if ((m = line.match(/^[-*+]\s+(.*)$/))) {
-      if (listType && listType !== 'ul') { html += '</ol>\n'; listType = null; }
+      if (listType && listType !== 'ul') { html += closeList(listType); listType = null; }
       if (listType !== 'ul') { html += '<ul>\n'; listType = 'ul'; }
       html += '<li>' + renderInline(m[1]) + '</li>\n';
       continue;
     }
     if ((m = line.match(/^\d+[.)]\s+(.*)$/))) {
-      if (listType && listType !== 'ol') { html += '</ul>\n'; listType = null; }
+      if (listType && listType !== 'ol') { html += closeList(listType); listType = null; }
       if (listType !== 'ol') { html += '<ol>\n'; listType = 'ol'; }
       html += '<li>' + renderInline(m[1]) + '</li>\n';
       continue;
@@ -641,9 +766,26 @@ function renderMarkdown(md) {
     html += '<p>' + renderInline(line) + '</p>\n';
   }
 
-  if (inCode) html += '<pre><code>' + codeLines.join('\n') + '</code></pre>\n';
-  if (listType) html += '</' + listType + '>\n';
+  if (inCode) {
+    const lang = currentLang || '';
+    if (lang.trim().toLowerCase() === 'mermaid') {
+      html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
+    } else {
+      html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+    }
+  }
+  if (listType) html += closeList(listType) + '\n';
   if (inQuote) html += '</blockquote>\n';
+
+  // Render footnotes section
+  if (footnoteKeys.length > 0) {
+    html += '<div class="footnotes"><h2>Footnotes</h2><ol>\n';
+    for (const key of footnoteKeys) {
+      html += '<li id="fn-' + key + '">' + renderInline(footnotes[key]) + ' <a href="#fnref-' + key + '" class="footnote-ref">&#8617;</a></li>\n';
+    }
+    html += '</ol></div>\n';
+  }
+
   return html;
 
   function closeBlocks() {
