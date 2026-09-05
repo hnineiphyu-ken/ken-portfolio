@@ -1,3 +1,45 @@
 .paragraph {
     text-indent: 50px;
 }
+
+/* Quiet depth for the portrait, with motion only during pointer interaction. */
+.about-img-holder .profile-portrait {
+    position: relative;
+    width: 80%;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    transform: perspective(900px) rotateX(var(--portrait-x, 0deg)) rotateY(var(--portrait-y, 0deg));
+    box-shadow: 0 14px 30px -18px rgba(55, 42, 86, 0.4);
+    transition: transform 350ms ease-out, box-shadow 350ms ease-out;
+}
+
+.about-img-holder .profile-portrait .about-img {
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+    border: 1px solid rgba(105, 90, 166, 0.18);
+    box-shadow: none;
+}
+
+.profile-portrait::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 48%);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .profile-portrait:hover {
+        box-shadow: 0 20px 35px -18px rgba(55, 42, 86, 0.45);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .about-img-holder .profile-portrait {
+        transform: none;
+        transition: none;
+    }
+}
