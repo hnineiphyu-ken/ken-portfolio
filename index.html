@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HninEi Phyu (Ken Nebula) | Senior Web Developer Portfolio</title>
     <!-- author => Devcrud -->
     <meta name="author" content="HninEi Phyu, Ken Nebula">   
@@ -17,8 +18,9 @@
     <!-- Bootstrap + Meyawo main styles -->
 	<link rel="stylesheet" href="assets/css/ken.css">
 	<link rel="stylesheet" href="assets/css/meyawo.css">
+    <link rel="stylesheet" href="assets/css/portfolio-motion.css">
 </head>
-<body data-spy="scroll" data-target=".navbar" data-offset="40" id="home">
+<body class="portfolio-refresh" data-spy="scroll" data-target=".navbar" data-offset="40" id="home">
 
     <!-- Page Navbar -->
     <nav class="custom-navbar" data-spy="affix" data-offset-top="20">
@@ -65,7 +67,10 @@
             </h1>
             <p class="header-subtitle">SENIOR WEB DEVELOPER</p>
 
-            <!-- <button class="btn btn-primary">Download Resume</button> -->
+            <div class="hero-actions">
+                <a href="#projects" class="btn btn-primary rounded">Explore My Work</a>
+                <a href="assets/file/HninEiPhyu_CV_Resume_082026.pdf" class="btn btn-outline-primary rounded" target="_blank" rel="noopener">Download CV</a>
+            </div>
         </div>              
     </header><!-- end of page header -->
 
@@ -553,5 +558,6 @@
     <!-- Meyawo js -->
     <script src="assets/js/meyawo.js"></script>
 
+    <script src="assets/js/portfolio-motion.js"></script>
 </body>
 </html>
