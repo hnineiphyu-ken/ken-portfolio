@@ -37,7 +37,7 @@ $('#nav-toggle').click(function(){
     $('ul.nav').toggleClass('show');
 });
 
-// A restrained, pointer-driven portrait tilt. Touch and reduced-motion stay still.
+// Layered portrait tilt and highlight; touch keeps the gentle CSS float only.
 (function () {
     var motion = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
     document.querySelectorAll('.profile-portrait').forEach(function (portrait) {
@@ -45,6 +45,8 @@ $('#nav-toggle').click(function(){
         function reset() {
             portrait.style.removeProperty('--portrait-x');
             portrait.style.removeProperty('--portrait-y');
+            portrait.style.removeProperty('--portrait-light-x');
+            portrait.style.removeProperty('--portrait-light-y');
             bounds = null;
         }
         portrait.addEventListener('pointerenter', function () {
@@ -55,8 +57,10 @@ $('#nav-toggle').click(function(){
             if (!bounds) bounds = portrait.getBoundingClientRect();
             var x = Math.max(-0.5, Math.min(0.5, (event.clientX - bounds.left) / bounds.width - 0.5));
             var y = Math.max(-0.5, Math.min(0.5, (event.clientY - bounds.top) / bounds.height - 0.5));
-            portrait.style.setProperty('--portrait-x', (-y * 8).toFixed(2) + 'deg');
-            portrait.style.setProperty('--portrait-y', (x * 8).toFixed(2) + 'deg');
+            portrait.style.setProperty('--portrait-x', (-y * 22).toFixed(2) + 'deg');
+            portrait.style.setProperty('--portrait-y', (x * 22).toFixed(2) + 'deg');
+            portrait.style.setProperty('--portrait-light-x', ((x + 0.5) * 100).toFixed(1) + '%');
+            portrait.style.setProperty('--portrait-light-y', ((y + 0.5) * 100).toFixed(1) + '%');
         });
         portrait.addEventListener('pointerleave', reset);
         portrait.addEventListener('pointercancel', reset);

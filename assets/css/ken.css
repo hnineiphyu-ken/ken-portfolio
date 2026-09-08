@@ -2,14 +2,15 @@
     text-indent: 50px;
 }
 
-/* Quiet depth for the portrait, with motion only during pointer interaction. */
+/* Layered portrait: raised photo, recessed purple frame and pointer lighting. */
 .about-img-holder .profile-portrait {
     position: relative;
     width: 80%;
     margin-bottom: 15px;
     border-radius: 50%;
-    transform: perspective(900px) rotateX(var(--portrait-x, 0deg)) rotateY(var(--portrait-y, 0deg));
-    box-shadow: 0 14px 30px -18px rgba(55, 42, 86, 0.4);
+    transform-style: preserve-3d;
+    transform: perspective(850px) rotateX(var(--portrait-x, 3deg)) rotateY(var(--portrait-y, -6deg));
+    box-shadow: 14px 28px 40px -22px rgba(55, 42, 86, 0.45);
     transition: transform 350ms ease-out, box-shadow 350ms ease-out;
 }
 
@@ -17,8 +18,21 @@
     display: block;
     width: 100%;
     margin-bottom: 0;
-    border: 1px solid rgba(105, 90, 166, 0.18);
-    box-shadow: none;
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    transform: translateZ(24px);
+    box-shadow: 0 10px 25px rgba(55, 42, 86, 0.16);
+}
+
+.profile-portrait::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    border-radius: inherit;
+    pointer-events: none;
+    border: 1px solid rgba(105, 90, 166, 0.3);
+    background: linear-gradient(145deg, rgba(105, 90, 166, 0.3), rgba(105, 90, 166, 0.04) 45%, rgba(105, 90, 166, 0.2));
+    box-shadow: 8px 14px 0 -3px rgba(105, 90, 166, 0.12);
+    transform: translateZ(-18px);
 }
 
 .profile-portrait::after {
@@ -27,13 +41,22 @@
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 48%);
+    transform: translateZ(26px);
+    background: radial-gradient(circle at var(--portrait-light-x, 25%) var(--portrait-light-y, 20%), rgba(255, 255, 255, 0.3), transparent 58%);
     box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .about-img-holder .profile-portrait { animation: portrait-float 6s ease-in-out infinite; }
+    @keyframes portrait-float {
+        0%, 100% { translate: 0 0; }
+        50% { translate: 0 -9px; }
+    }
 }
 
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
     .profile-portrait:hover {
-        box-shadow: 0 20px 35px -18px rgba(55, 42, 86, 0.45);
+        box-shadow: 16px 32px 46px -20px rgba(55, 42, 86, 0.5);
     }
 }
 
@@ -41,5 +64,18 @@
     .about-img-holder .profile-portrait {
         transform: none;
         transition: none;
+        animation: none;
+    }
+    .profile-portrait::before, .profile-portrait::after,
+    .about-img-holder .profile-portrait .about-img {
+        transform: none;
+    }
+    .profile-portrait::before { inset: -8px; }
+}
+
+@media print {
+    .about-img-holder .profile-portrait {
+        animation: none;
+        transform: none;
     }
 }
