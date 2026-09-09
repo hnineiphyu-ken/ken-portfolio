@@ -1,11 +1,44 @@
 /* Index-only enhancements to the existing Meyawo palette and typography. */
 .portfolio-refresh { --accent: #695aa6; --line: rgba(105,90,166,.16); }
 .portfolio-refresh .section { scroll-margin-top: 90px; }
-.portfolio-refresh .header { position: relative; overflow: hidden; }
-.portfolio-refresh .header-content { z-index: 1; }
+.portfolio-refresh .header { position: relative; overflow: hidden; isolation: isolate; }
+.portfolio-refresh .header-content { z-index: 2; perspective: 1000px; }
+.portfolio-refresh .header-title {
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transform: perspective(900px) rotateX(var(--hero-title-x, 0deg)) rotateY(var(--hero-title-y, 0deg));
+    transition: transform .22s ease-out;
+    will-change: transform;
+}
+.portfolio-refresh .header-title .up {
+    width: max-content;
+    color: #444;
+    text-shadow: 1px 2px 0 rgba(255,255,255,.5), 3px 5px 10px rgba(55,42,86,.13);
+}
+.portfolio-refresh .header-title .down {
+    width: max-content;
+    max-width: 100%;
+    color: #282932;
+    text-shadow:
+        1px 1px 0 rgba(105,90,166,.20),
+        2px 2px 0 rgba(105,90,166,.16),
+        3px 3px 0 rgba(105,90,166,.12),
+        7px 10px 20px rgba(55,42,86,.16);
+}
+.portfolio-refresh .hero-atmosphere { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.portfolio-refresh .hero-orb { position: absolute; border-radius: 50%; filter: blur(2px); opacity: .23; will-change: transform; }
+.portfolio-refresh .hero-orb-one { width: 330px; height: 330px; top: 8%; right: 8%; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.85), rgba(105,90,166,.55) 48%, transparent 72%); transform: translate3d(var(--hero-x, 0), var(--hero-y, 0), 0); }
+.portfolio-refresh .hero-orb-two { width: 220px; height: 220px; bottom: 13%; left: 6%; background: radial-gradient(circle at 60% 40%, rgba(105,90,166,.48), transparent 70%); transform: translate3d(calc(0px - var(--hero-x, 0px)), calc(0px - var(--hero-y, 0px)), 0); }
+.portfolio-refresh .hero-ring { position: absolute; width: 260px; height: 260px; top: 22%; right: 15%; border: 1px solid rgba(105,90,166,.25); border-radius: 50%; box-shadow: inset 0 0 0 26px rgba(255,255,255,.035), 0 0 0 38px rgba(105,90,166,.025); }
+.portfolio-refresh .hero-grid { position: absolute; inset: 0; opacity: .16; background-image: radial-gradient(rgba(105,90,166,.65) .7px, transparent .7px); background-size: 30px 30px; mask-image: linear-gradient(to right, transparent 5%, #000 48%, transparent 95%); }
+.portfolio-refresh .hero-scroll-cue { position: absolute; z-index: 2; left: 50%; bottom: 26px; display: flex; flex-direction: column; align-items: center; gap: 7px; color: #554a80; font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; transform: translateX(-50%); opacity: .72; }
+.portfolio-refresh .hero-scroll-cue:hover { color: var(--accent); text-decoration: none; }
+.portfolio-refresh .hero-scroll-mouse { display: block; width: 22px; height: 34px; border: 2px solid currentColor; border-radius: 14px; }
+.portfolio-refresh .hero-scroll-mouse span { display: block; width: 3px; height: 7px; margin: 6px auto 0; background: currentColor; border-radius: 3px; }
 .portfolio-refresh .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 .portfolio-refresh .hero-actions .btn { padding: 12px 24px; }
-.portfolio-refresh .header-subtitle { letter-spacing: .18em; }
+.portfolio-refresh .header-subtitle { position: relative; width: max-content; max-width: 100%; padding-bottom: 10px; letter-spacing: .18em; }
+.portfolio-refresh .header-subtitle::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), rgba(105,90,166,.08)); transform-origin: left; }
 .portfolio-refresh .section-title::after { content: ""; display: block; width: 42px; height: 3px; border-radius: 4px; background: var(--accent); margin: 16px auto 0; opacity: .5; }
 .portfolio-refresh .about-caption .section-title::after { margin-left: 0; }
 .portfolio-refresh #about { padding-top: 45px !important; }
@@ -25,17 +58,69 @@
 .portfolio-refresh .blog-card { border-radius: 18px; overflow: hidden; border-color: var(--line); box-shadow: 0 10px 32px rgba(55,42,86,.04); }
 .portfolio-refresh .btn, .portfolio-refresh .portfolio-card, .portfolio-refresh .blog-card { transition: transform .25s ease, box-shadow .25s ease; }
 .portfolio-refresh a:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+.portfolio-refresh .scroll-to-top {
+    position: fixed;
+    right: 24px;
+    bottom: 96px;
+    z-index: 1040;
+    display: grid;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    place-items: center;
+    color: #fff;
+    background: var(--accent);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 10px 24px rgba(55,42,86,.28);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(14px) scale(.9);
+    transition: opacity .25s ease, visibility .25s ease, transform .25s ease, box-shadow .25s ease;
+    cursor: pointer;
+}
+.portfolio-refresh .scroll-to-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+.portfolio-refresh .scroll-to-top:focus-visible {
+    outline: 3px solid rgba(105,90,166,.35);
+    outline-offset: 4px;
+}
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
     .portfolio-refresh .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(105,90,166,.18); }
     .portfolio-refresh .portfolio-card:hover, .portfolio-refresh .blog-card:hover { transform: translateY(-5px); box-shadow: 0 16px 36px rgba(55,42,86,.12); }
     .portfolio-refresh #projects article:hover { border-color: rgba(105,90,166,.45); box-shadow: 0 16px 36px rgba(55,42,86,.10); }
+    .portfolio-refresh .scroll-to-top:hover { transform: translateY(-4px) scale(1.04); box-shadow: 0 14px 28px rgba(55,42,86,.36); }
 }
 @media (prefers-reduced-motion: no-preference) {
-    .portfolio-refresh .header-title { animation: hero-arrive .8s ease both; }
-    .portfolio-refresh .header-subtitle, .portfolio-refresh .hero-actions { animation: hero-arrive .8s .15s ease both; }
+    .portfolio-refresh .hero-orb-one { animation: hero-orb-one 8s ease-in-out infinite alternate; }
+    .portfolio-refresh .hero-orb-two { animation: hero-orb-two 10s ease-in-out infinite alternate; }
+    .portfolio-refresh .hero-ring { animation: hero-ring 16s linear infinite; }
+    .portfolio-refresh .header-title { animation: none; }
+    .portfolio-refresh .header-title .up { animation: hero-greeting-pop .72s .08s cubic-bezier(.18,.85,.32,1.25) both, hero-greeting-float 4s 1.1s ease-in-out infinite; }
+    .portfolio-refresh .header-title .down { animation: hero-name-rise .9s .18s cubic-bezier(.16,.8,.24,1) both, hero-name-float 5s 1.2s ease-in-out infinite; }
+    .portfolio-refresh .header-subtitle { animation: hero-role .7s .38s ease both; }
+    .portfolio-refresh .header-subtitle::after { animation: hero-role-line .9s .72s ease both, hero-line-glow 3.2s 1.7s ease-in-out infinite; }
+    .portfolio-refresh .hero-actions { animation: hero-arrive .65s .55s ease both; }
+    .portfolio-refresh .hero-scroll-cue { animation: hero-cue-arrive .8s 1s ease both; }
+    .portfolio-refresh .hero-scroll-mouse span { animation: hero-scroll-dot 1.8s ease-in-out infinite; }
     .portfolio-refresh .reveal-ready { opacity: 0; transform: translateY(22px); transition: opacity .65s ease, transform .65s ease, box-shadow .25s ease, border-color .25s ease; }
     .portfolio-refresh .reveal-ready.is-visible { opacity: 1; transform: translateY(0); }
     @keyframes hero-arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes hero-greeting-pop { 0% { opacity: 0; transform: translate3d(-22px, 20px, 14px) rotateZ(-7deg) scale(.72); } 70% { transform: translate3d(3px, -3px, 14px) rotateZ(1deg) scale(1.04); } 100% { opacity: 1; transform: translate3d(0, 0, 14px) rotateZ(0) scale(1); } }
+    @keyframes hero-name-rise { from { opacity: 0; transform: translate3d(0, 44px, -45px) rotateX(-28deg) scale(.94); filter: blur(5px); } to { opacity: 1; transform: translate3d(0, 0, 28px) rotateX(0) scale(1); filter: blur(0); } }
+    @keyframes hero-greeting-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+    @keyframes hero-name-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
+    @keyframes hero-role { from { opacity: 0; letter-spacing: .32em; transform: translateY(10px); } to { opacity: .8; transform: translateY(0); } }
+    @keyframes hero-role-line { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+    @keyframes hero-line-glow { 0%, 100% { opacity: .45; filter: blur(0); } 50% { opacity: 1; filter: drop-shadow(0 0 4px rgba(105,90,166,.5)); } }
+    @keyframes hero-orb-one { to { translate: -24px 28px; scale: 1.08; } }
+    @keyframes hero-orb-two { to { translate: 30px -22px; scale: .92; } }
+    @keyframes hero-ring { to { rotate: 360deg; } }
+    @keyframes hero-cue-arrive { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: .72; transform: translate(-50%, 0); } }
+    @keyframes hero-scroll-dot { 0% { opacity: 0; transform: translateY(0); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(10px); } }
 }
 @media (max-width: 767.98px) {
     .portfolio-refresh #projects article { flex-basis: 100%; max-width: 100%; padding: 24px; }
@@ -43,7 +128,13 @@
     .portfolio-refresh .about-caption .section-title::after { margin-left: auto; }
     .portfolio-refresh .profile-portrait { margin-left: auto; margin-right: auto; }
     .portfolio-refresh .header-subtitle { letter-spacing: .1em; font-size: 15px; }
+    .portfolio-refresh .header-title .down { width: auto; }
     .portfolio-refresh .hero-actions .btn { padding: 10px 18px; }
+    .portfolio-refresh .hero-orb-one { right: -110px; }
+    .portfolio-refresh .hero-ring { right: -95px; opacity: .7; }
+    .portfolio-refresh .hero-orb-two { left: -100px; }
+    .portfolio-refresh .hero-scroll-cue { bottom: 18px; }
+    .portfolio-refresh .scroll-to-top { right: 18px; bottom: 88px; width: 43px; height: 43px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .portfolio-refresh *, .portfolio-refresh *::before, .portfolio-refresh *::after { animation: none !important; transition: none !important; }
