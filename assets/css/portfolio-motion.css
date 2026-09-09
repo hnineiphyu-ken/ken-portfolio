@@ -25,6 +25,25 @@
         3px 3px 0 rgba(105,90,166,.12),
         7px 10px 20px rgba(55,42,86,.16);
 }
+.portfolio-refresh .name-assembly { position: relative; }
+.portfolio-refresh .name-word { display: inline-block; white-space: nowrap; }
+.portfolio-refresh .name-gap { display: inline; }
+.portfolio-refresh .name-char { display: inline-block; transform-origin: 50% 72%; will-change: transform, opacity, filter; }
+.portfolio-refresh .name-assembly::after {
+    content: attr(data-name);
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    color: transparent;
+    background: linear-gradient(105deg, transparent 34%, rgba(255,255,255,.18) 43%, rgba(255,255,255,.88) 50%, rgba(105,90,166,.24) 56%, transparent 66%);
+    background-size: 240% 100%;
+    background-position: 150% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    pointer-events: none;
+    opacity: 0;
+}
 .portfolio-refresh .hero-atmosphere { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
 .portfolio-refresh .hero-orb { position: absolute; border-radius: 50%; filter: blur(2px); opacity: .23; will-change: transform; }
 .portfolio-refresh .hero-orb-one { width: 330px; height: 330px; top: 8%; right: 8%; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.85), rgba(105,90,166,.55) 48%, transparent 72%); transform: translate3d(var(--hero-x, 0), var(--hero-y, 0), 0); }
@@ -100,7 +119,9 @@
     .portfolio-refresh .hero-ring { animation: hero-ring 16s linear infinite; }
     .portfolio-refresh .header-title { animation: none; }
     .portfolio-refresh .header-title .up { animation: hero-greeting-pop .72s .08s cubic-bezier(.18,.85,.32,1.25) both, hero-greeting-float 4s 1.1s ease-in-out infinite; }
-    .portfolio-refresh .header-title .down { animation: hero-name-rise .9s .18s cubic-bezier(.16,.8,.24,1) both, hero-name-float 5s 1.2s ease-in-out infinite; }
+    .portfolio-refresh .header-title .down { animation: hero-name-float 5s 2.8s ease-in-out infinite; }
+    .portfolio-refresh .name-char { animation: name-assemble 1.05s var(--d) cubic-bezier(.18,.82,.22,1.12) both; }
+    .portfolio-refresh .name-assembly::after { animation: name-light-sweep 1.15s 1.85s ease-in-out both; }
     .portfolio-refresh .header-subtitle { animation: hero-role .7s .38s ease both; }
     .portfolio-refresh .header-subtitle::after { animation: hero-role-line .9s .72s ease both, hero-line-glow 3.2s 1.7s ease-in-out infinite; }
     .portfolio-refresh .hero-actions { animation: hero-arrive .65s .55s ease both; }
@@ -110,7 +131,18 @@
     .portfolio-refresh .reveal-ready.is-visible { opacity: 1; transform: translateY(0); }
     @keyframes hero-arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes hero-greeting-pop { 0% { opacity: 0; transform: translate3d(-22px, 20px, 14px) rotateZ(-7deg) scale(.72); } 70% { transform: translate3d(3px, -3px, 14px) rotateZ(1deg) scale(1.04); } 100% { opacity: 1; transform: translate3d(0, 0, 14px) rotateZ(0) scale(1); } }
-    @keyframes hero-name-rise { from { opacity: 0; transform: translate3d(0, 44px, -45px) rotateX(-28deg) scale(.94); filter: blur(5px); } to { opacity: 1; transform: translate3d(0, 0, 28px) rotateX(0) scale(1); filter: blur(0); } }
+    @keyframes name-assemble {
+        0% { opacity: 0; filter: blur(7px); transform: translate3d(var(--x), var(--y), -42px) rotate(var(--r)) scale(.72); }
+        68% { opacity: 1; filter: blur(0); transform: translate3d(var(--ox), var(--oy), 32px) rotate(var(--or)) scale(1.035); }
+        86% { transform: translate3d(-1px, 1px, 27px) rotate(-.35deg) scale(.992); }
+        100% { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 28px) rotate(0) scale(1); }
+    }
+    @keyframes name-light-sweep {
+        0% { opacity: 0; background-position: 150% 0; }
+        18% { opacity: .9; }
+        82% { opacity: .75; }
+        100% { opacity: 0; background-position: -65% 0; }
+    }
     @keyframes hero-greeting-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
     @keyframes hero-name-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
     @keyframes hero-role { from { opacity: 0; letter-spacing: .32em; transform: translateY(10px); } to { opacity: .8; transform: translateY(0); } }
