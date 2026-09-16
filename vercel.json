@@ -3,6 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/laptop-svg", "destination": "/laptop-svg.html" },
-    { "source": "/md-reader", "destination": "/md-reader.html" }
+    { "source": "/md-reader", "destination": "/md-reader.html" },
+    { "source": "/my-md", "destination": "/api/reader" }
   ]
 }
