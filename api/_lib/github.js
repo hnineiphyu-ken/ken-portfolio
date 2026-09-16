@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { getConfig } = require('./config');
 
 let cachedInstallationToken = null;
+let cachedInstallationId = null;
 
 function createAppJwt(config) {
   const now = Math.floor(Date.now() / 1000);
@@ -35,9 +36,24 @@ async function getInstallationToken() {
     return cachedInstallationToken.token;
   }
   const config = getConfig();
-  const response = await githubRequest(`/app/installations/${config.installationId}/access_tokens`, {
+  const appJwt = createAppJwt(config);
+  if (!cachedInstallationId) {
+    try {
+      const installationResponse = await githubRequest(`/repos/${config.owner}/${config.repository}/installation`, {
+        headers: { Authorization: `Bearer ${appJwt}` }
+      });
+      const installation = await installationResponse.json();
+      cachedInstallationId = installation.id;
+    } catch (error) {
+      if (error.status === 404) {
+        error.message = `The GitHub App is not installed on ${config.owner}/${config.repository}.`;
+      }
+      throw error;
+    }
+  }
+  const response = await githubRequest(`/app/installations/${cachedInstallationId}/access_tokens`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${createAppJwt(config)}` }
+    headers: { Authorization: `Bearer ${appJwt}` }
   });
   const data = await response.json();
   cachedInstallationToken = { token: data.token, expiresAt: Date.parse(data.expires_at) };

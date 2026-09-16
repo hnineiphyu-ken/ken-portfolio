@@ -23,7 +23,6 @@ Add these variables to Production, Preview, and Development as required:
 | `GITHUB_APP_ID` | GitHub App ID |
 | `GITHUB_APP_CLIENT_ID` | GitHub App Client ID |
 | `GITHUB_APP_CLIENT_SECRET` | GitHub App client secret |
-| `GITHUB_APP_INSTALLATION_ID` | Numeric installation ID |
 | `GITHUB_APP_PRIVATE_KEY` | Complete PEM private key, including header and footer |
 | `GITHUB_ALLOWED_LOGIN` | `hnineiphyu-ken` |
 | `GITHUB_REPOSITORY_OWNER` | `hnineiphyu-ken` |

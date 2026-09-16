@@ -2,7 +2,6 @@ const REQUIRED_ENV = [
   'GITHUB_APP_ID',
   'GITHUB_APP_CLIENT_ID',
   'GITHUB_APP_CLIENT_SECRET',
-  'GITHUB_APP_INSTALLATION_ID',
   'GITHUB_APP_PRIVATE_KEY',
   'GITHUB_ALLOWED_LOGIN',
   'SESSION_SECRET'
@@ -20,7 +19,6 @@ function getConfig() {
     appId: process.env.GITHUB_APP_ID,
     clientId: process.env.GITHUB_APP_CLIENT_ID,
     clientSecret: process.env.GITHUB_APP_CLIENT_SECRET,
-    installationId: process.env.GITHUB_APP_INSTALLATION_ID,
     privateKey: process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n'),
     allowedLogin: process.env.GITHUB_ALLOWED_LOGIN.toLowerCase(),
     owner: process.env.GITHUB_REPOSITORY_OWNER || 'hnineiphyu-ken',
