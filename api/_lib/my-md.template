@@ -28,6 +28,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .root-toggle.collapsed::before { transform: rotate(-90deg); }
 .remove-root { border: 0; background: transparent; color: #57606a; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 4px; border-radius: 4px; flex-shrink: 0; }
 .remove-root:hover { background: #eaeef2; color: #cf222e; }
+.row-sort-btn { border: 1px solid #d0d7de; background: #fff; color: #57606a; font-size: 11px; font-weight: 500; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; transition: all .15s ease; flex-shrink: 0; user-select: none; }
+.row-sort-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
+.row-sort-btn svg { display: inline-block; vertical-align: middle; }
+.folder-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
+.folder-row .folder { flex: 1; min-width: 0; }
 .tree { list-style: none; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }

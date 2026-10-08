@@ -12,6 +12,23 @@ let files = [];
 let selectedPath = '';
 let mermaidInitialized = false;
 
+let rootManualOrder = [];
+let folderSortDirs = {};
+const collapsedFolders = new Set();
+let draggedRootName = null;
+
+try {
+  rootManualOrder = JSON.parse(localStorage.getItem('my_md_root_order') || '[]');
+  folderSortDirs = JSON.parse(localStorage.getItem('my_md_folder_sorts') || '{}');
+} catch {}
+
+function getSortIconSvg(dir) {
+  if (dir === 'desc') {
+    return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 13.25a.75.75 0 0 0 1.5 0V5.56l1.72 1.72a.75.75 0 0 0 1.06-1.06l-3-3a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v7.69zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+  }
+  return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 1 1.5 0v7.69l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06l1.72 1.72V2.75zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+}
+
 menuBtn.addEventListener('click', () => {
   document.body.classList.toggle(isDrawerMode() ? 'sidebar-open' : 'sidebar-closed');
   updateMenuButtonLabel();
@@ -57,7 +74,7 @@ function renderTree() {
     treeEl.innerHTML = '<li class="empty">No matching Markdown files.</li>';
     return;
   }
-  buildTreeNodes(toTree(visible), treeEl);
+  buildTreeNodes(toTree(visible), treeEl, '', 'asc');
 }
 
 function toTree(entries) {
@@ -73,11 +90,52 @@ function toTree(entries) {
   return root;
 }
 
-function buildTreeNodes(node, parent, prefix = '') {
-  for (const name of Object.keys(node).filter(name => name !== '__file').sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))) {
+function getSortedNames(node, prefix, sortDir = 'asc') {
+  const names = Object.keys(node).filter(name => name !== '__file');
+
+  if (prefix === '') {
+    // Main root items: manual order (drag & drop)
+    if (!rootManualOrder.length) {
+      return names.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+    return names.sort((a, b) => {
+      const idxA = rootManualOrder.indexOf(a);
+      const idxB = rootManualOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b, undefined, { numeric: true });
+    });
+  }
+
+  // Folders under main root: alphabet sort (folders first, then files)
+  return names.sort((a, b) => {
+    const aIsDir = !node[a].__file;
+    const bIsDir = !node[b].__file;
+    if (aIsDir !== bIsDir) return aIsDir ? -1 : 1; // folders first
+
+    return sortDir === 'desc'
+      ? b.localeCompare(a, undefined, { numeric: true })
+      : a.localeCompare(b, undefined, { numeric: true });
+  });
+}
+
+function buildTreeNodes(node, parent, prefix = '', sortDir = 'asc') {
+  const isRoot = prefix === '';
+  const currentSortDir = isRoot ? 'asc' : sortDir;
+  const sortedNames = getSortedNames(node, prefix, currentSortDir);
+
+  for (const name of sortedNames) {
     const child = node[name];
     const path = prefix ? prefix + '/' + name : name;
     const li = document.createElement('li');
+
+    if (isRoot) {
+      li.className = 'tree-node-item root-item';
+      li.draggable = true;
+      enableRootDrag(li, name, sortedNames);
+    }
+
     if (child.__file) {
       const link = document.createElement('a');
       link.textContent = '📄 ' + name;
@@ -85,20 +143,106 @@ function buildTreeNodes(node, parent, prefix = '') {
       link.addEventListener('click', () => openRemoteFile(child.__file.path));
       li.appendChild(link);
     } else {
+      const folderRow = document.createElement('div');
+      folderRow.className = 'folder-row';
+
       const folder = document.createElement('div');
       folder.className = 'folder';
       folder.textContent = name;
+      const isCollapsed = collapsedFolders.has(path);
+      folder.classList.toggle('collapsed', isCollapsed);
+      folderRow.appendChild(folder);
+
+      // Alphabet sort button on each folder under the main root
+      const thisFolderSort = folderSortDirs[path] || 'asc';
+      if (!isRoot) {
+        const sortBtn = document.createElement('button');
+        sortBtn.type = 'button';
+        sortBtn.className = 'row-sort-btn';
+        sortBtn.title = 'Sort: ' + (thisFolderSort === 'asc' ? 'A-Z (click for Z-A)' : 'Z-A (click for A-Z)');
+        sortBtn.innerHTML = getSortIconSvg(thisFolderSort) + '<span>' + (thisFolderSort === 'asc' ? 'A-Z' : 'Z-A') + '</span>';
+        sortBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nextDir = thisFolderSort === 'asc' ? 'desc' : 'asc';
+          folderSortDirs[path] = nextDir;
+          try { localStorage.setItem('my_md_folder_sorts', JSON.stringify(folderSortDirs)); } catch {}
+          renderTree();
+        });
+        folderRow.appendChild(sortBtn);
+      }
+      li.appendChild(folderRow);
+
       const children = document.createElement('ul');
       children.className = 'children';
+      children.classList.toggle('collapsed', isCollapsed);
       folder.addEventListener('click', () => {
-        folder.classList.toggle('collapsed');
-        children.classList.toggle('collapsed');
+        const collapsed = folder.classList.toggle('collapsed');
+        children.classList.toggle('collapsed', collapsed);
+        if (collapsed) {
+          collapsedFolders.add(path);
+        } else {
+          collapsedFolders.delete(path);
+        }
       });
-      buildTreeNodes(child, children, path);
-      li.append(folder, children);
+      buildTreeNodes(child, children, path, thisFolderSort);
+      li.appendChild(children);
     }
     parent.appendChild(li);
   }
+}
+
+function enableRootDrag(item, name, siblingNames) {
+  item.addEventListener('dragstart', event => {
+    draggedRootName = name;
+    item.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', name);
+  });
+
+  item.addEventListener('dragover', event => {
+    if (!draggedRootName || draggedRootName === name) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = item.getBoundingClientRect();
+    const isAfter = event.clientY > rect.top + rect.height / 2;
+    item.classList.toggle('drop-before', !isAfter);
+    item.classList.toggle('drop-after', isAfter);
+  });
+
+  item.addEventListener('dragleave', () => {
+    item.classList.remove('drop-before', 'drop-after');
+  });
+
+  item.addEventListener('drop', event => {
+    if (!draggedRootName || draggedRootName === name) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const isAfter = item.classList.contains('drop-after');
+    item.classList.remove('drop-before', 'drop-after');
+
+    let order = rootManualOrder.length ? [...rootManualOrder] : [...siblingNames];
+    for (const s of siblingNames) {
+      if (!order.includes(s)) order.push(s);
+    }
+    const fromIdx = order.indexOf(draggedRootName);
+    if (fromIdx !== -1) order.splice(fromIdx, 1);
+    const toIdx = order.indexOf(name);
+    if (toIdx !== -1) {
+      order.splice(isAfter ? toIdx + 1 : toIdx, 0, draggedRootName);
+    } else {
+      order.push(draggedRootName);
+    }
+
+    rootManualOrder = order;
+    try { localStorage.setItem('my_md_root_order', JSON.stringify(rootManualOrder)); } catch {}
+    draggedRootName = null;
+    renderTree();
+  });
+
+  item.addEventListener('dragend', () => {
+    draggedRootName = null;
+    document.querySelectorAll('.tree .root-item').forEach(el => el.classList.remove('dragging', 'drop-before', 'drop-after'));
+  });
 }
 
 async function openRemoteFile(path) {

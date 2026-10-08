@@ -28,6 +28,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .root-toggle.collapsed::before { transform: rotate(-90deg); }
 .remove-root { border: 0; background: transparent; color: #57606a; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 4px; border-radius: 4px; flex-shrink: 0; }
 .remove-root:hover { background: #eaeef2; color: #cf222e; }
+.row-sort-btn { border: 1px solid #d0d7de; background: #fff; color: #57606a; font-size: 11px; font-weight: 500; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; transition: all .15s ease; flex-shrink: 0; user-select: none; }
+.row-sort-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
+.row-sort-btn svg { display: inline-block; vertical-align: middle; }
+.folder-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
+.folder-row .folder { flex: 1; min-width: 0; }
 .tree { list-style: none; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
@@ -151,8 +156,22 @@ let roots = []; // { id, name, files, collapsed }
 let nextRootId = 1;
 let selectedRootId = null;
 let selectedFileRel = '';
-let draggedRootId = null;
 let mermaidInitialized = false;
+
+let draggedRootId = null;
+let folderSortDirs = {};
+const collapsedFolders = new Set();
+
+try {
+  folderSortDirs = JSON.parse(localStorage.getItem('md_reader_folder_sorts') || '{}');
+} catch {}
+
+function getSortIconSvg(dir) {
+  if (dir === 'desc') {
+    return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 13.25a.75.75 0 0 0 1.5 0V5.56l1.72 1.72a.75.75 0 0 0 1.06-1.06l-3-3a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v7.69zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+  }
+  return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 1 1.5 0v7.69l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06l1.72 1.72V2.75zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+}
 
 menuBtn.addEventListener('click', () => {
   if (isDrawerMode()) {
@@ -268,7 +287,6 @@ function renderTree() {
   let totalFiles = 0;
   let totalVisibleFiles = 0;
   for (const root of roots) {
-    root.files.sort((a, b) => a.rel.localeCompare(b.rel, undefined, { numeric: true }));
     const visibleFiles = searchTerm
       ? root.files.filter(f => f.rel.toLowerCase().includes(searchTerm))
       : root.files;
@@ -337,7 +355,7 @@ function buildRoot(root, files, parentUl) {
   const ul = document.createElement('ul');
   ul.className = 'children';
   ul.classList.toggle('collapsed', root.collapsed);
-  buildUl(buildFileTree(files), ul, root.id);
+  buildUl(buildFileTree(files), ul, root.id, '', 'asc');
 
   toggle.addEventListener('click', () => {
     root.collapsed = !root.collapsed;
@@ -345,7 +363,8 @@ function buildRoot(root, files, parentUl) {
     ul.classList.toggle('collapsed', root.collapsed);
   });
 
-  removeBtn.addEventListener('click', () => {
+  removeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     roots = roots.filter(item => item.id !== root.id);
     if (selectedRootId === root.id) selectedRootId = null;
     if (selectedRootId === null) selectedFileRel = '';
@@ -393,7 +412,8 @@ function buildSingleFileRoot(root, entry, parentUl) {
   removeBtn.type = 'button';
   removeBtn.textContent = '×';
   removeBtn.setAttribute('aria-label', 'Remove selected file');
-  removeBtn.addEventListener('click', () => {
+  removeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     roots = roots.filter(item => item.id !== root.id);
     if (selectedRootId === root.id) {
       selectedRootId = null;
@@ -478,38 +498,75 @@ function buildFileTree(files) {
   return root;
 }
 
-function buildUl(obj, parentUl, rootId, prefix = '') {
+function buildUl(obj, parentUl, rootId, prefix = '', sortDir = 'asc') {
+  const currentSort = sortDir || 'asc';
   const keys = Object.keys(obj).sort((a, b) => {
-    const aDir = typeof obj[a].handle === 'undefined';
-    const bDir = typeof obj[b].handle === 'undefined';
+    const aDir = typeof obj[a].handle === 'undefined' && typeof obj[a].file === 'undefined';
+    const bDir = typeof obj[b].handle === 'undefined' && typeof obj[b].file === 'undefined';
     if (aDir !== bDir) return aDir ? -1 : 1;
-    return a.localeCompare(b, undefined, { numeric: true });
+    return currentSort === 'desc'
+      ? b.localeCompare(a, undefined, { numeric: true })
+      : a.localeCompare(b, undefined, { numeric: true });
   });
+
   for (const name of keys) {
     const entry = obj[name];
     const li = document.createElement('li');
+
     if (!entry.handle && !entry.file) {
       const folderPath = prefix ? prefix + '/' + name : name;
+      const folderKey = `${rootId}::${folderPath}`;
+      const folderRow = document.createElement('div');
+      folderRow.className = 'folder-row';
+
       const folder = document.createElement('div');
       folder.className = 'folder';
       folder.dataset.rootId = String(rootId);
       folder.dataset.path = folderPath;
       folder.classList.toggle('selected-parent', rootId === selectedRootId && selectedFileRel.startsWith(folderPath + '/'));
       folder.textContent = '📁 ' + name;
-      li.appendChild(folder);
+      const isCollapsed = collapsedFolders.has(folderKey);
+      folder.classList.toggle('collapsed', isCollapsed);
+      folderRow.appendChild(folder);
+
+      // Alphabet sort button on each folder under the main root
+      const thisFolderSort = folderSortDirs[folderKey] || 'asc';
+      const sortBtn = document.createElement('button');
+      sortBtn.type = 'button';
+      sortBtn.className = 'row-sort-btn';
+      sortBtn.title = 'Sort: ' + (thisFolderSort === 'asc' ? 'A-Z (click for Z-A)' : 'Z-A (click for A-Z)');
+      sortBtn.innerHTML = getSortIconSvg(thisFolderSort) + '<span>' + (thisFolderSort === 'asc' ? 'A-Z' : 'Z-A') + '</span>';
+      sortBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const nextDir = thisFolderSort === 'asc' ? 'desc' : 'asc';
+        folderSortDirs[folderKey] = nextDir;
+        try { localStorage.setItem('md_reader_folder_sorts', JSON.stringify(folderSortDirs)); } catch {}
+        renderTree();
+      });
+      folderRow.appendChild(sortBtn);
+      li.appendChild(folderRow);
+
       const ul = document.createElement('ul');
       ul.className = 'children';
-      buildUl(entry, ul, rootId, folderPath);
+      ul.classList.toggle('collapsed', isCollapsed);
+      buildUl(entry, ul, rootId, folderPath, thisFolderSort);
       li.appendChild(ul);
+
       folder.addEventListener('click', () => {
-        folder.classList.toggle('collapsed');
-        ul.classList.toggle('collapsed');
+        const collapsed = folder.classList.toggle('collapsed');
+        ul.classList.toggle('collapsed', collapsed);
+        if (collapsed) {
+          collapsedFolders.add(folderKey);
+        } else {
+          collapsedFolders.delete(folderKey);
+        }
       });
     } else {
       const a = document.createElement('a');
       a.textContent = '📄 ' + name;
       a.dataset.rel = entry.rel;
       a.dataset.rootId = String(entry.rootId);
+      a.classList.toggle('active', entry.rootId === selectedRootId && entry.rel === selectedFileRel);
       a.addEventListener('click', () => openFile(entry));
       li.appendChild(a);
     }
