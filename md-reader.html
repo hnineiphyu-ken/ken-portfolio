@@ -33,6 +33,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .row-sort-btn svg { display: inline-block; vertical-align: middle; }
 .folder-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
 .folder-row .folder { flex: 1; min-width: 0; }
+.file-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
+.file-row a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-copy-btn { border: 0; background: transparent; color: #57606a; width: 24px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; user-select: none; }
+.file-row:hover .file-copy-btn, .file-row a.active ~ .file-copy-btn, .single-file-row:hover .file-copy-btn, .single-file-row a.active ~ .file-copy-btn, .file-copy-btn:focus, .file-copy-btn.copied { opacity: 1; }
+.file-copy-btn:hover { background: #eaeef2; color: #0969da; }
+.file-row a.active ~ .file-copy-btn, .single-file-row a.active ~ .file-copy-btn { color: #fff; }
+.file-row a.active ~ .file-copy-btn:hover, .single-file-row a.active ~ .file-copy-btn:hover { background: rgba(255,255,255,.25); color: #fff; }
+.file-copy-btn.copied { color: #1a7f37 !important; }
+.file-row a.active ~ .file-copy-btn.copied, .single-file-row a.active ~ .file-copy-btn.copied { color: #7ee787 !important; }
+.document-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
+.document-path { font-size: 13px; font-weight: 500; color: #57606a; word-break: break-all; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.doc-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; font-weight: 500; color: #24292f; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; line-height: 1; transition: all .15s ease; user-select: none; flex-shrink: 0; }
+.doc-copy-btn:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
+.doc-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; font-weight: 600; }
+.doc-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.code-block { position: relative; margin: 0 0 16px; }
+.code-block pre { margin: 0; }
+.code-copy-btn { position: absolute; top: 8px; right: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 11px; font-weight: 500; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; user-select: none; line-height: 1; }
+.code-block:hover .code-copy-btn, .code-copy-btn:focus, .code-copy-btn.copied { opacity: 1; }
+.code-copy-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
+.code-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; }
+.code-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .tree { list-style: none; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
@@ -165,6 +187,74 @@ const collapsedFolders = new Set();
 try {
   folderSortDirs = JSON.parse(localStorage.getItem('md_reader_folder_sorts') || '{}');
 } catch {}
+
+let currentMarkdownText = '';
+
+function getCopyIconSvg(size = 14) {
+  return '<svg class="copy-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>';
+}
+
+function getCheckIconSvg(size = 14) {
+  return '<svg class="check-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>';
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {}
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  textarea.setAttribute('readonly', '');
+  document.body.appendChild(textarea);
+  textarea.select();
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch {}
+  document.body.removeChild(textarea);
+  return ok;
+}
+
+function showCopiedFeedback(btn, defaultText = '') {
+  btn.classList.add('copied');
+  if (btn._copiedTimer) clearTimeout(btn._copiedTimer);
+  const span = btn.querySelector('span');
+  const size = btn.classList.contains('doc-copy-btn') ? 14 : 12;
+  btn.innerHTML = getCheckIconSvg(size) + (span && defaultText ? '<span>Copied!</span>' : '');
+  btn._copiedTimer = setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = getCopyIconSvg(size) + (span && defaultText ? '<span>' + defaultText + '</span>' : '');
+  }, 2000);
+}
+
+mainEl.addEventListener('click', async (e) => {
+  const docBtn = e.target.closest('.doc-copy-btn');
+  if (docBtn) {
+    e.stopPropagation();
+    if (currentMarkdownText) {
+      await copyTextToClipboard(currentMarkdownText);
+      showCopiedFeedback(docBtn, 'Copy');
+    }
+    return;
+  }
+  const codeBtn = e.target.closest('.code-copy-btn');
+  if (codeBtn) {
+    e.stopPropagation();
+    const block = codeBtn.closest('.code-block');
+    if (!block) return;
+    const code = block.querySelector('code');
+    const text = code ? code.textContent : '';
+    await copyTextToClipboard(text);
+    showCopiedFeedback(codeBtn, 'Copy');
+    return;
+  }
+});
 
 function getSortIconSvg(dir) {
   if (dir === 'desc') {
@@ -429,7 +519,26 @@ function buildSingleFileRoot(root, entry, parentUl) {
     }
   });
 
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.className = 'file-copy-btn';
+  copyBtn.title = 'Copy file content';
+  copyBtn.setAttribute('aria-label', 'Copy file content');
+  copyBtn.innerHTML = getCopyIconSvg(12);
+  copyBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    try {
+      const file = entry.file || await entry.handle.getFile();
+      const text = await file.text();
+      await copyTextToClipboard(text);
+      showCopiedFeedback(copyBtn);
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
   row.appendChild(link);
+  row.appendChild(copyBtn);
   row.appendChild(removeBtn);
   li.appendChild(row);
   enableRootDrag(row, li, root.id);
@@ -562,13 +671,37 @@ function buildUl(obj, parentUl, rootId, prefix = '', sortDir = 'asc') {
         }
       });
     } else {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+
       const a = document.createElement('a');
       a.textContent = '📄 ' + name;
       a.dataset.rel = entry.rel;
       a.dataset.rootId = String(entry.rootId);
       a.classList.toggle('active', entry.rootId === selectedRootId && entry.rel === selectedFileRel);
       a.addEventListener('click', () => openFile(entry));
-      li.appendChild(a);
+      row.appendChild(a);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'file-copy-btn';
+      copyBtn.title = 'Copy file content';
+      copyBtn.setAttribute('aria-label', 'Copy file content');
+      copyBtn.innerHTML = getCopyIconSvg(12);
+      copyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          const file = entry.file || await entry.handle.getFile();
+          const text = await file.text();
+          await copyTextToClipboard(text);
+          showCopiedFeedback(copyBtn);
+        } catch (err) {
+          console.error(err);
+        }
+      });
+      row.appendChild(copyBtn);
+
+      li.appendChild(row);
     }
     parentUl.appendChild(li);
   }
@@ -596,7 +729,16 @@ async function openFile(entry) {
     }
   }
 
-  mainEl.innerHTML = '<article class="markdown">' + renderMarkdown(text) + '</article>';
+  currentMarkdownText = text;
+  mainEl.innerHTML = '<article class="markdown">' +
+    '<div class="document-header">' +
+      '<div class="document-path"><span class="doc-icon">📄</span><span class="doc-name">' + escapeHtml(entry.rel) + '</span></div>' +
+      '<button type="button" class="doc-copy-btn" id="docCopyBtn" title="Copy Markdown content" aria-label="Copy Markdown content">' +
+        getCopyIconSvg(14) + '<span>Copy</span>' +
+      '</button>' +
+    '</div>' +
+    renderMarkdown(text) +
+  '</article>';
   await renderMermaidDiagrams();
   // Keep the file tree visible on desktop; only dismiss the mobile drawer.
   if (isDrawerMode()) closeSidebar();
@@ -735,7 +877,7 @@ function renderMarkdown(md) {
         if (isMermaid) {
           html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
         } else {
-          html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+          html += '<div class="code-block"><button type="button" class="code-copy-btn" title="Copy code" aria-label="Copy code">' + getCopyIconSvg(12) + '<span>Copy</span></button><pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre></div>\n';
         }
         codeLines = [];
         currentLang = '';
@@ -828,7 +970,7 @@ function renderMarkdown(md) {
     if (lang.trim().toLowerCase() === 'mermaid') {
       html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
     } else {
-      html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+      html += '<div class="code-block"><button type="button" class="code-copy-btn" title="Copy code" aria-label="Copy code">' + getCopyIconSvg(12) + '<span>Copy</span></button><pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre></div>\n';
     }
   }
   if (listType) html += closeList(listType) + '\n';

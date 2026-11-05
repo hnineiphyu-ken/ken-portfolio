@@ -33,6 +33,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .row-sort-btn svg { display: inline-block; vertical-align: middle; }
 .folder-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
 .folder-row .folder { flex: 1; min-width: 0; }
+.file-row { display: flex; align-items: center; justify-content: space-between; width: 100%; border-radius: 6px; }
+.file-row a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-copy-btn { border: 0; background: transparent; color: #57606a; width: 24px; height: 24px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; user-select: none; }
+.file-row:hover .file-copy-btn, .file-row a.active ~ .file-copy-btn, .file-copy-btn:focus, .file-copy-btn.copied { opacity: 1; }
+.file-copy-btn:hover { background: #eaeef2; color: #0969da; }
+.file-row a.active ~ .file-copy-btn { color: #fff; }
+.file-row a.active ~ .file-copy-btn:hover { background: rgba(255,255,255,.25); color: #fff; }
+.file-copy-btn.copied { color: #1a7f37 !important; }
+.file-row a.active ~ .file-copy-btn.copied { color: #7ee787 !important; }
 .tree { list-style: none; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
 .tree.collapsed { display: none; }
 .tree li { margin: 2px 0; }
@@ -110,9 +119,20 @@ body.sidebar-open .menu-btn { display: none; }
 .reader-actions .open-btn { flex: 1; margin: 0; }
 .logout-link { display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid #d0d7de; border-radius: 6px; color: #57606a; font-size: 13px; text-decoration: none; }
 .logout-link:hover { background: #f6f8fa; color: #cf222e; }
-.repository-name, .document-path { color: #57606a; font-size: 12px; word-break: break-all; }
-.repository-name { padding: 8px; background: #f6f8fa; border-radius: 6px; }
-.document-path { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
+.repository-name { color: #57606a; font-size: 12px; word-break: break-all; padding: 8px; background: #f6f8fa; border-radius: 6px; }
+.document-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
+.document-path { font-size: 13px; font-weight: 500; color: #57606a; word-break: break-all; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.doc-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; font-weight: 500; color: #24292f; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; line-height: 1; transition: all .15s ease; user-select: none; flex-shrink: 0; }
+.doc-copy-btn:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
+.doc-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; font-weight: 600; }
+.doc-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.code-block { position: relative; margin: 0 0 16px; }
+.code-block pre { margin: 0; }
+.code-copy-btn { position: absolute; top: 8px; right: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 11px; font-weight: 500; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; user-select: none; line-height: 1; }
+.code-block:hover .code-copy-btn, .code-copy-btn:focus, .code-copy-btn.copied { opacity: 1; }
+.code-copy-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
+.code-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; }
+.code-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .loading-row { color: #57606a; font-size: 13px; padding: 10px 8px; }
 </style>
 </head>

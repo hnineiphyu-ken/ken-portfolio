@@ -22,6 +22,74 @@ try {
   folderSortDirs = JSON.parse(localStorage.getItem('my_md_folder_sorts') || '{}');
 } catch {}
 
+let currentMarkdownText = '';
+
+function getCopyIconSvg(size = 14) {
+  return '<svg class="copy-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>';
+}
+
+function getCheckIconSvg(size = 14) {
+  return '<svg class="check-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>';
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {}
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  textarea.setAttribute('readonly', '');
+  document.body.appendChild(textarea);
+  textarea.select();
+  let ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch {}
+  document.body.removeChild(textarea);
+  return ok;
+}
+
+function showCopiedFeedback(btn, defaultText = '') {
+  btn.classList.add('copied');
+  if (btn._copiedTimer) clearTimeout(btn._copiedTimer);
+  const span = btn.querySelector('span');
+  const size = btn.classList.contains('doc-copy-btn') ? 14 : 12;
+  btn.innerHTML = getCheckIconSvg(size) + (span && defaultText ? '<span>Copied!</span>' : '');
+  btn._copiedTimer = setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = getCopyIconSvg(size) + (span && defaultText ? '<span>' + defaultText + '</span>' : '');
+  }, 2000);
+}
+
+mainEl.addEventListener('click', async (e) => {
+  const docBtn = e.target.closest('.doc-copy-btn');
+  if (docBtn) {
+    e.stopPropagation();
+    if (currentMarkdownText) {
+      await copyTextToClipboard(currentMarkdownText);
+      showCopiedFeedback(docBtn, 'Copy');
+    }
+    return;
+  }
+  const codeBtn = e.target.closest('.code-copy-btn');
+  if (codeBtn) {
+    e.stopPropagation();
+    const block = codeBtn.closest('.code-block');
+    if (!block) return;
+    const code = block.querySelector('code');
+    const text = code ? code.textContent : '';
+    await copyTextToClipboard(text);
+    showCopiedFeedback(codeBtn, 'Copy');
+    return;
+  }
+});
+
 function getSortIconSvg(dir) {
   if (dir === 'desc') {
     return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 13.25a.75.75 0 0 0 1.5 0V5.56l1.72 1.72a.75.75 0 0 0 1.06-1.06l-3-3a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v7.69zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
@@ -137,11 +205,39 @@ function buildTreeNodes(node, parent, prefix = '', sortDir = 'asc') {
     }
 
     if (child.__file) {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+
       const link = document.createElement('a');
       link.textContent = '📄 ' + name;
       link.classList.toggle('active', child.__file.path === selectedPath);
       link.addEventListener('click', () => openRemoteFile(child.__file.path));
-      li.appendChild(link);
+      row.appendChild(link);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'file-copy-btn';
+      copyBtn.title = 'Copy file content';
+      copyBtn.setAttribute('aria-label', 'Copy file content');
+      copyBtn.innerHTML = getCopyIconSvg(12);
+      copyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          if (child.__file.path === selectedPath && currentMarkdownText) {
+            await copyTextToClipboard(currentMarkdownText);
+            showCopiedFeedback(copyBtn);
+          } else {
+            const data = await requestJson('/api/markdown/file?path=' + encodeURIComponent(child.__file.path));
+            await copyTextToClipboard(data.content);
+            showCopiedFeedback(copyBtn);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      });
+      row.appendChild(copyBtn);
+
+      li.appendChild(row);
     } else {
       const folderRow = document.createElement('div');
       folderRow.className = 'folder-row';
@@ -250,8 +346,17 @@ async function openRemoteFile(path) {
   try {
     const data = await requestJson('/api/markdown/file?path=' + encodeURIComponent(path));
     selectedPath = data.path;
+    currentMarkdownText = data.content;
     renderTree();
-    mainEl.innerHTML = '<article class="markdown"><div class="document-path">' + escapeHtml(data.path) + '</div>' + renderMarkdown(data.content) + '</article>';
+    mainEl.innerHTML = '<article class="markdown">' +
+      '<div class="document-header">' +
+        '<div class="document-path"><span class="doc-icon">📄</span><span class="doc-name">' + escapeHtml(data.path) + '</span></div>' +
+        '<button type="button" class="doc-copy-btn" id="docCopyBtn" title="Copy Markdown content" aria-label="Copy Markdown content">' +
+          getCopyIconSvg(14) + '<span>Copy</span>' +
+        '</button>' +
+      '</div>' +
+      renderMarkdown(data.content) +
+    '</article>';
     await renderMermaidDiagrams();
     if (isDrawerMode()) closeSidebar();
   } catch (error) {
@@ -398,7 +503,7 @@ function renderMarkdown(md) {
         if (isMermaid) {
           html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
         } else {
-          html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+          html += '<div class="code-block"><button type="button" class="code-copy-btn" title="Copy code" aria-label="Copy code">' + getCopyIconSvg(12) + '<span>Copy</span></button><pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre></div>\n';
         }
         codeLines = [];
         currentLang = '';
@@ -484,7 +589,7 @@ function renderMarkdown(md) {
     if (lang.trim().toLowerCase() === 'mermaid') {
       html += '<div class="mermaid">' + escapeHtml(normalizeMermaidSource(codeLines.join('\n'))) + '</div>\n';
     } else {
-      html += '<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>\n';
+      html += '<div class="code-block"><button type="button" class="code-copy-btn" title="Copy code" aria-label="Copy code">' + getCopyIconSvg(12) + '<span>Copy</span></button><pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre></div>\n';
     }
   }
   if (listType) html += closeList(listType) + '\n';
