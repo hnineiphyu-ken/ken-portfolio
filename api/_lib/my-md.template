@@ -107,7 +107,7 @@ body.sidebar-closed .main { padding: 72px 40px 32px 88px; }
 @media (max-width: 1023px) {
 body { display: block; }
 .menu-btn { display: block; }
-.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(352px, 92vw); height: 100vh; height: 100dvh; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
+.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(320px, 86vw); height: 100vh; height: 100dvh; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
 body.sidebar-closed .sidebar { display: flex; }
 body.sidebar-open .sidebar { transform: translateX(0); }
 body.sidebar-open .sidebar-overlay { display: block; }
@@ -120,63 +120,83 @@ body.sidebar-open .menu-btn { display: none; }
 .logout-link { display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid #d0d7de; border-radius: 6px; color: #57606a; font-size: 13px; text-decoration: none; }
 .logout-link:hover { background: #f6f8fa; color: #cf222e; }
 .repository-name { color: #57606a; font-size: 12px; word-break: break-all; padding: 8px; background: #f6f8fa; border-radius: 6px; }
-.quick-reports { margin: 10px 0 8px; border: 1px solid #e1e4e8; border-radius: 8px; background: #f6f8fa; flex-shrink: 0; overflow: hidden; }
+.quick-reports { container: quick-reports / inline-size; margin: 0 0 18px; border: 1px solid #d0d7de; border-radius: 8px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.04); overflow: clip; }
 .quick-reports[hidden] { display: none; }
 .quick-reports-heading { margin: 0; font-size: 100%; font-weight: inherit; }
-.quick-reports-toggle { width: 100%; border: 0; background: transparent; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; color: #24292f; font-size: 12px; font-weight: 600; text-align: left; }
-.quick-reports-toggle:hover { background: #eaeef2; }
-.quick-reports-title-wrap { display: inline-flex; align-items: center; gap: 6px; min-inline-size: 0; }
+.quick-reports-toggle { width: 100%; border: 0; background: transparent; padding: 10px 14px; min-block-size: 42px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; color: #24292f; font-size: 13px; font-weight: 600; text-align: left; }
+.quick-reports-toggle:hover { background: #f6f8fa; }
+.quick-reports-title-wrap { display: inline-flex; align-items: center; gap: 8px; min-inline-size: 0; }
 .quick-reports-chevron { display: inline-block; width: 12px; color: #57606a; transition: transform .15s ease; flex-shrink: 0; }
 .quick-reports-toggle[aria-expanded="false"] .quick-reports-chevron { transform: rotate(-90deg); }
-.quick-reports-count { font-size: 11px; font-weight: 600; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 999px; padding: 1px 7px; line-height: 1.4; flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.quick-reports-body { max-block-size: min(460px, 58dvh); overflow-y: auto; overscroll-behavior: contain; }
+.quick-reports-count { font-size: 11px; font-weight: 600; color: #57606a; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 999px; padding: 1px 8px; line-height: 1.4; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.quick-reports-summary { font-size: 12px; font-weight: 500; color: #57606a; margin-inline-start: auto; white-space: nowrap; }
+.quick-reports-body { max-block-size: min(560px, 70dvh); overflow-y: auto; overscroll-behavior: contain; }
 .quick-reports-body[hidden] { display: none; }
-.quick-view-tabs { display: flex; gap: 4px; padding: 0 6px; border-top: 1px solid #e1e4e8; background: #fff; }
-.quick-view-tab { flex: 1 1 0; position: relative; border: 0; background: transparent; color: #57606a; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1; padding: 8px 6px; min-block-size: 32px; cursor: pointer; text-align: center; transition: color .15s ease, background .15s ease; }
+.quick-controls-bar { border-top: 1px solid #e1e4e8; background: #f6f8fa; }
+.quick-view-tabs { display: flex; gap: 4px; padding: 0 10px; background: #fff; border-bottom: 1px solid #e1e4e8; }
+.quick-view-tab { flex: 1 1 0; position: relative; border: 0; background: transparent; color: #57606a; font-family: inherit; font-size: 12.5px; font-weight: 600; line-height: 1; padding: 9px 10px; min-block-size: 34px; cursor: pointer; text-align: center; white-space: nowrap; transition: color .15s ease, background .15s ease; }
 .quick-view-tab:hover { color: #24292f; background: #f6f8fa; }
 .quick-view-tab[aria-selected="true"] { color: #0969da; }
 .quick-view-tab[aria-selected="true"]::after { content: ""; position: absolute; inset: auto 4px 0; border-block-end: 2.5px solid #0969da; border-radius: 2px 2px 0 0; }
 .quick-view-panel[hidden] { display: none; }
-.quick-reports-filter { display: block; padding: 8px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
-.quick-filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); gap: 6px; }
+.quick-reports-filter { display: block; padding: 10px 14px; }
+.quick-filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr)); gap: 8px; }
 .quick-filter-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .quick-filter-label { font-size: 11px; font-weight: 600; color: #57606a; line-height: 1.2; }
-.quick-date-input { width: 100%; min-width: 0; min-block-size: 30px; padding: 3px 6px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; color: #24292f; color-scheme: light; accent-color: #0969da; font-family: inherit; font-size: 12px; line-height: 1.2; }
+.quick-date-input { width: 100%; min-width: 0; min-block-size: 32px; padding: 4px 8px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; color: #24292f; color-scheme: light; accent-color: #0969da; font-family: inherit; font-size: 12.5px; line-height: 1.2; }
 .quick-date-input:user-invalid, .quick-date-input[aria-invalid="true"] { border-color: #cf222e; }
 .quick-filter-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .quick-filter-actions[hidden] { display: none; }
-.quick-filter-status { font-size: 11px; color: #57606a; min-width: 0; }
+.quick-filter-status { font-size: 11.5px; color: #57606a; min-width: 0; }
 .quick-filter-status.is-error { color: #cf222e; font-weight: 500; }
-.quick-filter-clear { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11px; font-weight: 500; line-height: 1; padding: 4px 8px; min-block-size: 24px; border-radius: 5px; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
+.quick-filter-clear { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11.5px; font-weight: 500; line-height: 1; padding: 4px 10px; min-block-size: 26px; border-radius: 5px; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
 .quick-filter-clear:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
 .quick-filter-clear[hidden] { display: none; }
-.quick-reports-list { list-style: none; padding: 4px 6px 6px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 2px; }
-.quick-pager { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
+.quick-reports-list { list-style: none; padding: 6px 10px 8px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 3px; }
+.quick-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
 .quick-pager[hidden] { display: none; }
-.quick-pager-btn { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11.5px; font-weight: 500; line-height: 1; padding: 4px 8px; min-block-size: 26px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all .15s ease; user-select: none; }
+.quick-pager-btn { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 12px; font-weight: 500; line-height: 1; padding: 5px 10px; min-block-size: 28px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all .15s ease; user-select: none; }
 .quick-pager-btn:hover:not([aria-disabled="true"]) { border-color: #0969da; color: #0969da; background: #f3f4f6; }
 .quick-pager-btn[aria-disabled="true"] { color: #8c959f; background: #f6f8fa; cursor: not-allowed; opacity: .7; }
-.quick-pager-info { font-size: 11px; color: #57606a; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.quick-period-nav { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-top: 1px solid #e1e4e8; background: #fff; }
-.quick-period-btn { border: 1px solid #d0d7de; background: #f6f8fa; color: #24292f; font-size: 12px; font-weight: 600; line-height: 1; min-block-size: 26px; min-inline-size: 28px; padding: 3px 7px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .15s ease; flex-shrink: 0; user-select: none; }
+.quick-pager-info { font-size: 12px; color: #57606a; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.quick-period-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; border-top: 1px solid #e1e4e8; background: #fff; }
+.quick-period-btn { border: 1px solid #d0d7de; background: #f6f8fa; color: #24292f; font-size: 13px; font-weight: 600; line-height: 1; min-block-size: 28px; min-inline-size: 32px; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .15s ease; flex-shrink: 0; user-select: none; }
 .quick-period-btn:hover:not([aria-disabled="true"]) { border-color: #0969da; color: #0969da; background: #f0f6ff; }
 .quick-period-btn[aria-disabled="true"] { color: #8c959f; cursor: not-allowed; opacity: .65; }
-.quick-period-label { font-size: 12px; font-weight: 600; color: #24292f; text-align: center; font-variant-numeric: tabular-nums; min-inline-size: 0; }
-.quick-cal-wrap { padding: 6px 8px 8px; border-top: 1px solid #e1e4e8; background: #fff; }
-.quick-cal-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-bottom: 4px; }
-.quick-cal-weekday { font-size: 10.5px; font-weight: 600; color: #57606a; text-align: center; line-height: 1.4; user-select: none; }
-.quick-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
-.quick-cal-pad { min-block-size: 28px; }
-.quick-cal-day { position: relative; width: 100%; min-block-size: 30px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #24292f; font-family: inherit; font-size: 11.5px; font-variant-numeric: tabular-nums; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px 1px; line-height: 1.1; }
-span.quick-cal-day.is-empty { color: #8c959f; opacity: .65; user-select: none; }
-span.quick-cal-day.is-today { border-color: #d0d7de; opacity: .95; font-weight: 600; }
+.quick-period-label { font-size: 13px; font-weight: 600; color: #24292f; text-align: center; font-variant-numeric: tabular-nums; min-inline-size: 0; }
+.quick-cal-wrap { padding: 8px 14px 12px; border-top: 1px solid #e1e4e8; background: #fff; }
+.quick-cal-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 6px; }
+.quick-cal-weekday { font-size: 11px; font-weight: 600; color: #57606a; text-align: center; line-height: 1.4; user-select: none; }
+.quick-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.quick-cal-pad { min-block-size: 36px; }
+.quick-cal-day { position: relative; width: 100%; min-block-size: 38px; border: 1px solid transparent; border-radius: 6px; background: #f6f8fa; color: #24292f; font-family: inherit; font-size: 12px; font-variant-numeric: tabular-nums; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 2px; line-height: 1.15; }
+.quick-cal-sub { display: none; font-size: 10px; font-weight: 500; opacity: .85; }
+span.quick-cal-day.is-empty { color: #8c959f; background: transparent; opacity: .65; user-select: none; }
+span.quick-cal-day.is-today { border-color: #d0d7de; background: #f6f8fa; opacity: .95; font-weight: 600; }
 button.quick-cal-day.has-report { cursor: pointer; background: #eef6ff; color: #0969da; font-weight: 600; border-color: #b6d7f5; transition: background .15s ease, border-color .15s ease, scale .1s ease; }
 button.quick-cal-day.has-report:hover { background: #ddf4ff; border-color: #0969da; }
-button.quick-cal-day.has-report:active { scale: 0.96; }
+button.quick-cal-day.has-report:active { scale: 0.97; }
 button.quick-cal-day.has-report.is-today { border-color: #0969da; box-shadow: inset 0 0 0 1px rgba(9,105,218,.25); }
 button.quick-cal-day[aria-current="date"] { background: #0969da; border-color: #0969da; color: #fff; }
-button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; border-radius: 999px; background: currentColor; margin-top: 2px; opacity: .85; }
-.quick-reports-empty { padding: 10px 8px; font-size: 12.5px; color: #57606a; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #fff; border-top: 1px solid #e1e4e8; }
+button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; border-radius: 999px; background: currentColor; opacity: .85; }
+.quick-reports-empty { padding: 14px 12px; font-size: 13px; color: #57606a; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #fff; border-top: 1px solid #e1e4e8; }
+@container quick-reports (inline-size >= 620px) {
+.quick-controls-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; padding: 8px 14px; }
+.quick-view-tabs { flex: 0 0 auto; border: 1px solid #d0d7de; border-radius: 6px; padding: 2px; gap: 2px; }
+.quick-view-tab { flex: 0 0 auto; min-block-size: 30px; padding: 6px 12px; border-radius: 4px; }
+.quick-reports-filter { padding: 0; flex: 1 1 auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
+.quick-filter-row { display: flex; align-items: center; gap: 10px; }
+.quick-filter-field { flex-direction: row; align-items: center; gap: 6px; }
+.quick-date-input { width: auto; min-inline-size: 132px; }
+.quick-filter-actions { margin-top: 0; }
+.quick-cal-day { min-block-size: 46px; font-size: 13px; }
+.quick-cal-pad { min-block-size: 46px; }
+.quick-cal-sub { display: inline; }
+#quickPanelWeek .quick-reports-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; padding: 10px 14px 12px; }
+#quickPanelWeek .quick-date-btn { border: 1px solid #e1e4e8; background: #f6f8fa; }
+#quickPanelWeek .quick-date-btn:hover { background: #eef6ff; border-color: #b6d7f5; }
+#quickPanelWeek .quick-date-btn[aria-current="date"] { background: #0969da; border-color: #0969da; }
+}
 .quick-date-btn { width: 100%; border: 0; background: transparent; color: #24292f; font-size: 13px; text-align: left; padding: 5px 8px; min-block-size: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: background .15s ease, scale .1s ease; }
 .quick-date-btn:hover { background: #f0f1f3; }
 .quick-date-btn:active { scale: 0.99; }
@@ -242,35 +262,41 @@ button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; b
     <input class="search-input" id="searchInput" type="search" placeholder="Search Markdown files…" aria-label="Search Markdown files">
     <div class="repository-name" id="repository">Loading private repository…</div>
   </div>
-  <div class="quick-reports" id="quickReports" hidden>
+  <ul class="tree" id="tree"></ul>
+  <div class="developer-credit">Private · Hachiware</div>
+</aside>
+<main class="main" id="main">
+  <section class="quick-reports" id="quickReports" aria-label="Daily Reports" hidden>
     <h2 class="quick-reports-heading">
-      <button class="quick-reports-toggle" id="quickReportsToggle" type="button" aria-expanded="true" aria-controls="quickReportsBody">
-        <span class="quick-reports-title-wrap"><span class="quick-reports-chevron" aria-hidden="true">▾</span><span>Daily Reports</span></span>
-        <span class="quick-reports-count" id="quickReportsCount">0</span>
+      <button class="quick-reports-toggle" id="quickReportsToggle" type="button" aria-expanded="false" aria-controls="quickReportsBody">
+        <span class="quick-reports-title-wrap"><span class="quick-reports-chevron" aria-hidden="true">▾</span><span>Daily Reports</span><span class="quick-reports-count" id="quickReportsCount">0</span></span>
+        <span class="quick-reports-summary" id="quickReportsSummary">List (5)</span>
       </button>
     </h2>
-    <div class="quick-reports-body" id="quickReportsBody">
-      <div class="quick-view-tabs" id="quickViewTabs" role="tablist" aria-label="Daily reports view">
-        <button class="quick-view-tab" id="quickTabList" type="button" role="tab" data-quick-view="list" aria-selected="true" tabindex="0">List (5)</button>
-        <button class="quick-view-tab" id="quickTabWeek" type="button" role="tab" data-quick-view="week" aria-selected="false" tabindex="-1">Week</button>
-        <button class="quick-view-tab" id="quickTabMonth" type="button" role="tab" data-quick-view="month" aria-selected="false" tabindex="-1">Month</button>
+    <div class="quick-reports-body" id="quickReportsBody" hidden>
+      <div class="quick-controls-bar">
+        <div class="quick-view-tabs" id="quickViewTabs" role="tablist" aria-label="Daily reports view">
+          <button class="quick-view-tab" id="quickTabList" type="button" role="tab" data-quick-view="list" aria-selected="true" tabindex="0">List (5)</button>
+          <button class="quick-view-tab" id="quickTabWeek" type="button" role="tab" data-quick-view="week" aria-selected="false" tabindex="-1">Week</button>
+          <button class="quick-view-tab" id="quickTabMonth" type="button" role="tab" data-quick-view="month" aria-selected="false" tabindex="-1">Month</button>
+        </div>
+        <search class="quick-reports-filter" aria-label="Filter daily reports by date range">
+          <div class="quick-filter-row">
+            <div class="quick-filter-field">
+              <label class="quick-filter-label" for="reportDateFrom">From</label>
+              <input class="quick-date-input" id="reportDateFrom" name="report_from" type="date" aria-describedby="reportFilterStatus">
+            </div>
+            <div class="quick-filter-field">
+              <label class="quick-filter-label" for="reportDateTo">To</label>
+              <input class="quick-date-input" id="reportDateTo" name="report_to" type="date" aria-describedby="reportFilterStatus">
+            </div>
+          </div>
+          <div class="quick-filter-actions" id="quickFilterActions" hidden>
+            <span class="quick-filter-status" id="reportFilterStatus" role="status" aria-live="polite"></span>
+            <button class="quick-filter-clear" id="reportFilterClear" type="button" hidden>Clear dates</button>
+          </div>
+        </search>
       </div>
-      <search class="quick-reports-filter" aria-label="Filter daily reports by date range">
-        <div class="quick-filter-row">
-          <div class="quick-filter-field">
-            <label class="quick-filter-label" for="reportDateFrom">From</label>
-            <input class="quick-date-input" id="reportDateFrom" name="report_from" type="date" aria-describedby="reportFilterStatus">
-          </div>
-          <div class="quick-filter-field">
-            <label class="quick-filter-label" for="reportDateTo">To</label>
-            <input class="quick-date-input" id="reportDateTo" name="report_to" type="date" aria-describedby="reportFilterStatus">
-          </div>
-        </div>
-        <div class="quick-filter-actions" id="quickFilterActions" hidden>
-          <span class="quick-filter-status" id="reportFilterStatus" role="status" aria-live="polite"></span>
-          <button class="quick-filter-clear" id="reportFilterClear" type="button" hidden>Clear dates</button>
-        </div>
-      </search>
       <div class="quick-view-panel" id="quickPanelList" role="tabpanel" aria-labelledby="quickTabList">
         <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
         <nav class="quick-pager" id="quickListPagination" aria-label="Daily reports pages" hidden>
@@ -282,12 +308,10 @@ button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; b
       <div class="quick-view-panel" id="quickPanelWeek" role="tabpanel" aria-labelledby="quickTabWeek" hidden></div>
       <div class="quick-view-panel" id="quickPanelMonth" role="tabpanel" aria-labelledby="quickTabMonth" hidden></div>
     </div>
+  </section>
+  <div class="main-document" id="documentContent">
+    <div class="loading"><span class="spinner" aria-hidden="true"></span><span>Loading private Markdown files…</span></div>
   </div>
-  <ul class="tree" id="tree"></ul>
-  <div class="developer-credit">Private · Hachiware</div>
-</aside>
-<main class="main" id="main">
-  <div class="loading"><span class="spinner" aria-hidden="true"></span><span>Loading private Markdown files…</span></div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script src="/assets/js/hachiware-reader.js"></script>

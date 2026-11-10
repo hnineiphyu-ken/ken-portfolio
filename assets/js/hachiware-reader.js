@@ -7,11 +7,13 @@ const searchInput = document.getElementById('searchInput');
 const refreshBtn = document.getElementById('refreshBtn');
 const treeEl = document.getElementById('tree');
 const mainEl = document.getElementById('main');
+const documentContentEl = document.getElementById('documentContent') || mainEl;
 const repositoryEl = document.getElementById('repository');
 const quickReportsEl = document.getElementById('quickReports');
 const quickReportsToggle = document.getElementById('quickReportsToggle');
 const quickReportsBody = document.getElementById('quickReportsBody');
 const quickReportsCount = document.getElementById('quickReportsCount');
+const quickReportsSummary = document.getElementById('quickReportsSummary');
 const quickReportsList = document.getElementById('quickReportsList');
 const reportDateFrom = document.getElementById('reportDateFrom');
 const reportDateTo = document.getElementById('reportDateTo');
@@ -37,7 +39,7 @@ let files = [];
 let dailyReports = [];
 let selectedPath = '';
 let mermaidInitialized = false;
-let quickReportsCollapsed = false;
+let quickReportsCollapsed = true;
 let quickViewMode = 'list';
 let quickReportPage = 1;
 let quickActiveWeekStart = '';
@@ -54,7 +56,7 @@ let draggedRootName = null;
 try {
   rootManualOrder = JSON.parse(localStorage.getItem('my_md_root_order') || '[]');
   folderSortDirs = JSON.parse(localStorage.getItem('my_md_folder_sorts') || '{}');
-  quickReportsCollapsed = localStorage.getItem('my_md_quick_reports_collapsed') === '1';
+  quickReportsCollapsed = localStorage.getItem('my_md_main_reports_expanded') !== '1';
   const savedQuickView = localStorage.getItem('my_md_quick_view_mode');
   if (QUICK_VIEW_MODES.includes(savedQuickView)) quickViewMode = savedQuickView;
 } catch {}
@@ -325,7 +327,7 @@ function showCopiedFeedback(btn, defaultText = '') {
   }, 2000);
 }
 
-mainEl.addEventListener('click', async (e) => {
+documentContentEl.addEventListener('click', async (e) => {
   const navBtn = e.target.closest('.doc-nav-btn');
   if (navBtn) {
     e.stopPropagation();
@@ -374,7 +376,7 @@ if (quickReportsToggle) {
   syncQuickReportsCollapsed();
   quickReportsToggle.addEventListener('click', () => {
     quickReportsCollapsed = !quickReportsCollapsed;
-    try { localStorage.setItem('my_md_quick_reports_collapsed', quickReportsCollapsed ? '1' : '0'); } catch {}
+    try { localStorage.setItem('my_md_main_reports_expanded', quickReportsCollapsed ? '0' : '1'); } catch {}
     syncQuickReportsCollapsed();
   });
 }
@@ -507,10 +509,7 @@ sidebarCloseBtn.addEventListener('click', () => {
   if (wasDrawer) menuBtn.focus();
 });
 sidebarOverlay.addEventListener('click', closeSidebar);
-searchInput.addEventListener('input', () => {
-  resetQuickViewOnFilterChange();
-  renderTree();
-});
+searchInput.addEventListener('input', renderTree);
 refreshBtn.addEventListener('click', loadTree);
 
 function handleHashNavigation() {
@@ -551,6 +550,7 @@ async function loadTree() {
     dailyReports = extractDailyReports(files);
     syncReportDateBounds();
     repositoryEl.textContent = data.repository + ' · ' + data.branch;
+    renderQuickReports();
     renderTree();
 
     const hashPath = decodeHashPath();
@@ -586,32 +586,22 @@ function syncReportDateBounds() {
 }
 
 function getFilteredDailyReports() {
-  const term = searchInput.value.trim().toLowerCase();
   const fromDate = reportDateFrom ? reportDateFrom.value.trim() : '';
   const toDate = reportDateTo ? reportDateTo.value.trim() : '';
   const hasDateFilter = Boolean(fromDate || toDate);
   const invalidRange = Boolean(fromDate && toDate && fromDate > toDate);
 
   if (invalidRange) {
-    return { term, fromDate, toDate, hasDateFilter, invalidRange, items: [] };
+    return { fromDate, toDate, hasDateFilter, invalidRange, items: [] };
   }
 
   const items = dailyReports.filter(item => {
     if (fromDate && item.date < fromDate) return false;
     if (toDate && item.date > toDate) return false;
-    if (term) {
-      return (
-        item.date.toLowerCase().includes(term) ||
-        item.path.toLowerCase().includes(term) ||
-        item.weekday.toLowerCase().includes(term) ||
-        item.shortDate.toLowerCase().includes(term) ||
-        item.badge.toLowerCase().includes(term)
-      );
-    }
     return true;
   });
 
-  return { term, fromDate, toDate, hasDateFilter, invalidRange, items };
+  return { fromDate, toDate, hasDateFilter, invalidRange, items };
 }
 
 function syncQuickViewToReport(filePath) {
@@ -926,7 +916,7 @@ function renderQuickMonthView(visibleReports, byDateMap, emptyMsg) {
 function renderQuickReports() {
   if (!quickReportsEl || !quickReportsList || !quickReportsCount) return;
   syncQuickViewTabsUi();
-  const { term, hasDateFilter, invalidRange, items: visibleReports } = getFilteredDailyReports();
+  const { hasDateFilter, invalidRange, items: visibleReports } = getFilteredDailyReports();
 
   [reportDateFrom, reportDateTo].forEach(input => {
     if (!input) return;
@@ -934,13 +924,14 @@ function renderQuickReports() {
     else input.removeAttribute('aria-invalid');
   });
 
-  if (!dailyReports.length || (term && !hasDateFilter && !visibleReports.length)) {
+  if (!dailyReports.length) {
     quickReportsEl.hidden = true;
     quickReportsList.innerHTML = '';
     if (quickListPagination) quickListPagination.hidden = true;
     if (quickPanelWeek) quickPanelWeek.innerHTML = '';
     if (quickPanelMonth) quickPanelMonth.innerHTML = '';
     quickReportsCount.textContent = '0';
+    if (quickReportsSummary) quickReportsSummary.textContent = '';
     if (reportFilterStatus) {
       reportFilterStatus.textContent = '';
       reportFilterStatus.classList.remove('is-error');
@@ -954,6 +945,10 @@ function renderQuickReports() {
   quickReportsCount.textContent = hasDateFilter
     ? visibleReports.length + '/' + dailyReports.length
     : String(visibleReports.length);
+  if (quickReportsSummary) {
+    const modeLabel = quickViewMode === 'week' ? 'Week' : quickViewMode === 'month' ? 'Month' : 'List (5)';
+    quickReportsSummary.textContent = modeLabel + (hasDateFilter ? ' · Filtered' : '');
+  }
 
   let statusText = '';
   if (invalidRange) {
@@ -987,7 +982,6 @@ function renderQuickReports() {
 }
 
 function renderTree() {
-  renderQuickReports();
   const term = searchInput.value.trim().toLowerCase();
   const visible = term ? files.filter(file => file.path.toLowerCase().includes(term)) : files;
   treeEl.innerHTML = '';
@@ -1224,7 +1218,7 @@ function buildDateNavInnerHtml(older, newer) {
 
 function refreshActiveDocumentNav() {
   if (!selectedPath) return;
-  const navGroup = mainEl.querySelector('.doc-date-nav');
+  const navGroup = documentContentEl.querySelector('.doc-date-nav');
   if (!navGroup) return;
   const navReports = getNavigationReports(selectedPath);
   const reportIndex = navReports.findIndex(item => item.path === selectedPath);
@@ -1280,8 +1274,9 @@ async function openRemoteFile(path, { hashMode = 'push', closeOnMobile = true } 
     const fileName = data.path.split('/').pop() || data.path;
     document.title = fileName + " · KEN'S-MD";
 
+    renderQuickReports();
     renderTree();
-    mainEl.innerHTML = '<article class="markdown">' + buildDocumentHeaderHtml(data.path) + renderMarkdown(data.content) + '</article>';
+    documentContentEl.innerHTML = '<article class="markdown">' + buildDocumentHeaderHtml(data.path) + renderMarkdown(data.content) + '</article>';
     mainEl.scrollTop = 0;
     await renderMermaidDiagrams();
     if (token !== activeLoadToken) return;
@@ -1578,9 +1573,9 @@ function renderTable(headers, rows) {
 }
 
 function renderEmpty(htmlContent) {
-  mainEl.innerHTML = htmlContent;
+  documentContentEl.innerHTML = htmlContent;
 }
 
 function renderLoading(message) {
-  mainEl.innerHTML = '<div class="loading"><span class="spinner" aria-hidden="true"></span><span>' + escapeHtml(message) + '</span></div>';
+  documentContentEl.innerHTML = '<div class="loading"><span class="spinner" aria-hidden="true"></span><span>' + escapeHtml(message) + '</span></div>';
 }
