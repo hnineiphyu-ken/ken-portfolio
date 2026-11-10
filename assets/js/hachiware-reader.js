@@ -22,7 +22,6 @@ const reportFilterStatus = document.getElementById('reportFilterStatus');
 const reportFilterClear = document.getElementById('reportFilterClear');
 const quickViewTabsEl = document.getElementById('quickViewTabs');
 const quickPanelList = document.getElementById('quickPanelList');
-const quickPanelWeek = document.getElementById('quickPanelWeek');
 const quickPanelMonth = document.getElementById('quickPanelMonth');
 const quickListPagination = document.getElementById('quickListPagination');
 const quickPagePrev = document.getElementById('quickPagePrev');
@@ -30,7 +29,7 @@ const quickPageNext = document.getElementById('quickPageNext');
 const quickPageInfo = document.getElementById('quickPageInfo');
 
 const QUICK_REPORT_PAGE_SIZE = 5;
-const QUICK_VIEW_MODES = ['list', 'week', 'month'];
+const QUICK_VIEW_MODES = ['list', 'month'];
 const QUICK_CAL_WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const MONTH_YEAR_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
 const LONG_MONTH_FMT = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
@@ -42,7 +41,6 @@ let mermaidInitialized = false;
 let quickReportsCollapsed = true;
 let quickViewMode = 'list';
 let quickReportPage = 1;
-let quickActiveWeekStart = '';
 let quickActiveMonth = '';
 let todayIsoCache = '';
 let activeLoadToken = 0;
@@ -160,26 +158,6 @@ function parseIsoDateParts(isoDate) {
   return { year, month, day, dayOfWeek: jsDay === 0 ? 7 : jsDay };
 }
 
-function shiftIsoDays(isoDate, deltaDays) {
-  const parts = parseIsoDateParts(isoDate);
-  if (!parts) return '';
-  if (typeof Temporal !== 'undefined') {
-    const plain = Temporal.PlainDate.from({ year: parts.year, month: parts.month, day: parts.day });
-    const shifted = deltaDays >= 0
-      ? plain.add({ days: deltaDays })
-      : plain.subtract({ days: -deltaDays });
-    return shifted.toString();
-  }
-  const d = new Date(parts.year, parts.month - 1, parts.day + deltaDays);
-  return toIsoDateString(d.getFullYear(), d.getMonth() + 1, d.getDate());
-}
-
-function getWeekStartIso(isoDate) {
-  const parts = parseIsoDateParts(isoDate);
-  if (!parts) return '';
-  return shiftIsoDays(isoDate, -(parts.dayOfWeek - 1));
-}
-
 function shiftYearMonth(yearMonth, deltaMonths) {
   const parts = yearMonth.split('-').map(Number);
   if (parts.length !== 2 || parts.some(Number.isNaN)) return '';
@@ -222,22 +200,6 @@ function getMonthMetadata(yearMonth) {
     label: MONTH_YEAR_FMT.format(firstDate),
     longLabel: LONG_MONTH_FMT.format(firstDate)
   };
-}
-
-function formatWeekRangeLabel(weekStartIso, weekEndIso) {
-  const start = parseIsoDateParts(weekStartIso);
-  const end = parseIsoDateParts(weekEndIso);
-  if (!start || !end) return weekStartIso + ' – ' + weekEndIso;
-  const startMeta = formatReportDateMeta(weekStartIso);
-  const endMeta = formatReportDateMeta(weekEndIso);
-  if (!startMeta || !endMeta) return weekStartIso + ' – ' + weekEndIso;
-  if (start.year === end.year && start.month === end.month) {
-    return startMeta.shortDate + ' – ' + end.day + ', ' + end.year;
-  }
-  if (start.year === end.year) {
-    return startMeta.shortDate + ' – ' + endMeta.shortDate + ', ' + end.year;
-  }
-  return startMeta.shortDate + ', ' + start.year + ' – ' + endMeta.shortDate + ', ' + end.year;
 }
 
 function getDefaultFolderSort(path) {
@@ -390,7 +352,6 @@ function syncQuickViewTabsUi() {
     tab.setAttribute('tabindex', active ? '0' : '-1');
   }
   if (quickPanelList) quickPanelList.hidden = quickViewMode !== 'list';
-  if (quickPanelWeek) quickPanelWeek.hidden = quickViewMode !== 'week';
   if (quickPanelMonth) quickPanelMonth.hidden = quickViewMode !== 'month';
 }
 
@@ -410,14 +371,6 @@ function resetQuickViewOnFilterChange() {
   quickReportPage = 1;
   const { items: visibleReports } = getFilteredDailyReports();
   if (!visibleReports.length) return;
-  if (quickActiveWeekStart) {
-    const weekEnd = shiftIsoDays(quickActiveWeekStart, 6);
-    if (!visibleReports.some(r => r.date >= quickActiveWeekStart && r.date <= weekEnd)) {
-      quickActiveWeekStart = getWeekStartIso(visibleReports[0].date);
-    }
-  } else {
-    quickActiveWeekStart = getWeekStartIso(visibleReports[0].date);
-  }
   if (quickActiveMonth) {
     if (!visibleReports.some(r => r.date.slice(0, 7) === quickActiveMonth)) {
       quickActiveMonth = visibleReports[0].date.slice(0, 7);
@@ -607,7 +560,6 @@ function getFilteredDailyReports() {
 function syncQuickViewToReport(filePath) {
   const report = dailyReports.find(item => item.path === filePath);
   if (!report) return;
-  quickActiveWeekStart = getWeekStartIso(report.date);
   quickActiveMonth = report.date.slice(0, 7);
   const { items: visibleReports } = getFilteredDailyReports();
   const visibleIdx = visibleReports.findIndex(item => item.path === filePath);
@@ -769,79 +721,6 @@ function renderQuickListView(visibleReports, emptyMsg) {
   }
 }
 
-function renderQuickWeekView(visibleReports, byDateMap, emptyMsg) {
-  if (!quickPanelWeek) return;
-  quickPanelWeek.innerHTML = '';
-
-  if (!visibleReports.length) {
-    quickPanelWeek.appendChild(createQuickEmptyElement(emptyMsg));
-    return;
-  }
-
-  const minWeek = getWeekStartIso(visibleReports[visibleReports.length - 1].date);
-  const maxWeek = getWeekStartIso(visibleReports[0].date);
-  if (!quickActiveWeekStart || quickActiveWeekStart < minWeek || quickActiveWeekStart > maxWeek) {
-    quickActiveWeekStart = maxWeek;
-  }
-
-  const weekDates = [];
-  for (let i = 0; i < 7; i++) {
-    weekDates.push(shiftIsoDays(quickActiveWeekStart, i));
-  }
-  const weekEnd = weekDates[6];
-  const weekReports = weekDates.slice().reverse().map(d => byDateMap.get(d)).filter(Boolean);
-
-  quickPanelWeek.appendChild(createQuickPeriodNav({
-    label: formatWeekRangeLabel(quickActiveWeekStart, weekEnd) + ' (' + weekReports.length + ')',
-    prevLabel: 'Previous week',
-    nextLabel: 'Next week',
-    hasPrev: quickActiveWeekStart > minWeek,
-    hasNext: quickActiveWeekStart < maxWeek,
-    onPrev: () => {
-      quickActiveWeekStart = shiftIsoDays(quickActiveWeekStart, -7);
-      renderQuickReports();
-    },
-    onNext: () => {
-      quickActiveWeekStart = shiftIsoDays(quickActiveWeekStart, 7);
-      renderQuickReports();
-    }
-  }));
-
-  const calWrap = document.createElement('div');
-  calWrap.className = 'quick-cal-wrap';
-  calWrap.appendChild(createWeekdaysRow());
-
-  const stripGrid = document.createElement('div');
-  stripGrid.className = 'quick-cal-grid';
-  for (const isoDate of weekDates) {
-    const parts = parseIsoDateParts(isoDate);
-    const meta = getMonthMetadata(isoDate.slice(0, 7));
-    stripGrid.appendChild(createQuickCalendarDayNode({
-      day: parts ? parts.day : '',
-      isoDate,
-      longMonthLabel: meta ? meta.longLabel : isoDate.slice(0, 7),
-      report: byDateMap.get(isoDate) || null
-    }));
-  }
-  calWrap.appendChild(stripGrid);
-  quickPanelWeek.appendChild(calWrap);
-
-  if (!weekReports.length) {
-    quickPanelWeek.appendChild(createQuickEmptyElement('No reports in this week.'));
-    return;
-  }
-
-  const ul = document.createElement('ul');
-  ul.className = 'quick-reports-list';
-  ul.setAttribute('role', 'list');
-  for (const report of weekReports) {
-    const li = document.createElement('li');
-    li.appendChild(createQuickDateButton(report));
-    ul.appendChild(li);
-  }
-  quickPanelWeek.appendChild(ul);
-}
-
 function renderQuickMonthView(visibleReports, byDateMap, emptyMsg) {
   if (!quickPanelMonth) return;
   quickPanelMonth.innerHTML = '';
@@ -928,7 +807,6 @@ function renderQuickReports() {
     quickReportsEl.hidden = true;
     quickReportsList.innerHTML = '';
     if (quickListPagination) quickListPagination.hidden = true;
-    if (quickPanelWeek) quickPanelWeek.innerHTML = '';
     if (quickPanelMonth) quickPanelMonth.innerHTML = '';
     quickReportsCount.textContent = '0';
     if (quickReportsSummary) quickReportsSummary.textContent = '';
@@ -946,7 +824,7 @@ function renderQuickReports() {
     ? visibleReports.length + '/' + dailyReports.length
     : String(visibleReports.length);
   if (quickReportsSummary) {
-    const modeLabel = quickViewMode === 'week' ? 'Week' : quickViewMode === 'month' ? 'Month' : 'List (5)';
+    const modeLabel = quickViewMode === 'month' ? 'Month' : 'List (5)';
     quickReportsSummary.textContent = modeLabel + (hasDateFilter ? ' · Filtered' : '');
   }
 
@@ -972,9 +850,7 @@ function renderQuickReports() {
     byDateMap.set(report.date, report);
   }
 
-  if (quickViewMode === 'week') {
-    renderQuickWeekView(visibleReports, byDateMap, emptyMsg);
-  } else if (quickViewMode === 'month') {
+  if (quickViewMode === 'month') {
     renderQuickMonthView(visibleReports, byDateMap, emptyMsg);
   } else {
     renderQuickListView(visibleReports, emptyMsg);

@@ -170,7 +170,6 @@ body.sidebar-open .menu-btn { display: none; }
 .quick-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .quick-cal-pad { min-block-size: 36px; }
 .quick-cal-day { position: relative; width: 100%; min-block-size: 38px; border: 1px solid transparent; border-radius: 6px; background: #f6f8fa; color: #24292f; font-family: inherit; font-size: 12px; font-variant-numeric: tabular-nums; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 2px; line-height: 1.15; }
-.quick-cal-sub { display: none; font-size: 10px; font-weight: 500; opacity: .85; }
 span.quick-cal-day.is-empty { color: #8c959f; background: transparent; opacity: .65; user-select: none; }
 span.quick-cal-day.is-today { border-color: #d0d7de; background: #f6f8fa; opacity: .95; font-weight: 600; }
 button.quick-cal-day.has-report { cursor: pointer; background: #eef6ff; color: #0969da; font-weight: 600; border-color: #b6d7f5; transition: background .15s ease, border-color .15s ease, scale .1s ease; }
@@ -191,11 +190,6 @@ button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; b
 .quick-filter-actions { margin-top: 0; }
 .quick-cal-day { min-block-size: 46px; font-size: 13px; }
 .quick-cal-pad { min-block-size: 46px; }
-.quick-cal-sub { display: inline; }
-#quickPanelWeek .quick-reports-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; padding: 10px 14px 12px; }
-#quickPanelWeek .quick-date-btn { border: 1px solid #e1e4e8; background: #f6f8fa; }
-#quickPanelWeek .quick-date-btn:hover { background: #eef6ff; border-color: #b6d7f5; }
-#quickPanelWeek .quick-date-btn[aria-current="date"] { background: #0969da; border-color: #0969da; }
 }
 .quick-date-btn { width: 100%; border: 0; background: transparent; color: #24292f; font-size: 13px; text-align: left; padding: 5px 8px; min-block-size: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: background .15s ease, scale .1s ease; }
 .quick-date-btn:hover { background: #f0f1f3; }
@@ -277,7 +271,6 @@ button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; b
       <div class="quick-controls-bar">
         <div class="quick-view-tabs" id="quickViewTabs" role="tablist" aria-label="Daily reports view">
           <button class="quick-view-tab" id="quickTabList" type="button" role="tab" data-quick-view="list" aria-selected="true" tabindex="0">List (5)</button>
-          <button class="quick-view-tab" id="quickTabWeek" type="button" role="tab" data-quick-view="week" aria-selected="false" tabindex="-1">Week</button>
           <button class="quick-view-tab" id="quickTabMonth" type="button" role="tab" data-quick-view="month" aria-selected="false" tabindex="-1">Month</button>
         </div>
         <search class="quick-reports-filter" aria-label="Filter daily reports by date range">
@@ -305,7 +298,6 @@ button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; b
           <button class="quick-pager-btn" id="quickPageNext" type="button" aria-label="Next page" aria-disabled="true">Next <span aria-hidden="true">›</span></button>
         </nav>
       </div>
-      <div class="quick-view-panel" id="quickPanelWeek" role="tabpanel" aria-labelledby="quickTabWeek" hidden></div>
       <div class="quick-view-panel" id="quickPanelMonth" role="tabpanel" aria-labelledby="quickTabMonth" hidden></div>
     </div>
   </section>
