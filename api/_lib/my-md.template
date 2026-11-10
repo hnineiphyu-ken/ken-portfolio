@@ -129,8 +129,22 @@ body.sidebar-open .menu-btn { display: none; }
 .quick-reports-chevron { display: inline-block; width: 12px; color: #57606a; transition: transform .15s ease; flex-shrink: 0; }
 .quick-reports-toggle[aria-expanded="false"] .quick-reports-chevron { transform: rotate(-90deg); }
 .quick-reports-count { font-size: 11px; font-weight: 600; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 999px; padding: 1px 7px; line-height: 1.4; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.quick-reports-body[hidden] { display: none; }
+.quick-reports-filter { display: block; padding: 8px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
+.quick-filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); gap: 6px; }
+.quick-filter-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.quick-filter-label { font-size: 11px; font-weight: 600; color: #57606a; line-height: 1.2; }
+.quick-date-input { width: 100%; min-width: 0; min-block-size: 30px; padding: 3px 6px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; color: #24292f; color-scheme: light; accent-color: #0969da; font-family: inherit; font-size: 12px; line-height: 1.2; }
+.quick-date-input:user-invalid, .quick-date-input[aria-invalid="true"] { border-color: #cf222e; }
+.quick-filter-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.quick-filter-actions[hidden] { display: none; }
+.quick-filter-status { font-size: 11px; color: #57606a; min-width: 0; }
+.quick-filter-status.is-error { color: #cf222e; font-weight: 500; }
+.quick-filter-clear { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11px; font-weight: 500; line-height: 1; padding: 4px 8px; min-block-size: 24px; border-radius: 5px; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
+.quick-filter-clear:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
+.quick-filter-clear[hidden] { display: none; }
 .quick-reports-list { list-style: none; max-block-size: min(156px, 24dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 4px 6px 6px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 2px; }
-.quick-reports-list[hidden] { display: none; }
+.quick-reports-empty { padding: 10px 8px; font-size: 12.5px; color: #57606a; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .quick-date-btn { width: 100%; border: 0; background: transparent; color: #24292f; font-size: 13px; text-align: left; padding: 5px 8px; min-block-size: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: background .15s ease, scale .1s ease; }
 .quick-date-btn:hover { background: #f0f1f3; }
 .quick-date-btn:active { scale: 0.99; }
@@ -162,12 +176,15 @@ body.sidebar-open .menu-btn { display: none; }
 .code-copy-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
 .code-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; }
 .code-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
-:where(button, a):focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+:where(button, a, .quick-date-input):focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
 @media (hover: none) {
 .file-copy-btn, .code-copy-btn { opacity: 1; }
 }
 @media (pointer: coarse) {
 .quick-reports-toggle { min-block-size: 44px; }
+.quick-filter-row { grid-template-columns: 1fr; }
+.quick-date-input { font-size: max(1rem, 1em); min-block-size: 44px; padding: 8px 10px; }
+.quick-filter-clear { min-block-size: 44px; padding: 8px 12px; font-size: 13px; }
 .quick-date-btn { min-block-size: 44px; padding: 8px 10px; }
 .doc-copy-btn, .doc-nav-btn { min-block-size: 44px; padding: 8px 12px; }
 }
@@ -192,12 +209,30 @@ body.sidebar-open .menu-btn { display: none; }
   </div>
   <div class="quick-reports" id="quickReports" hidden>
     <h2 class="quick-reports-heading">
-      <button class="quick-reports-toggle" id="quickReportsToggle" type="button" aria-expanded="true" aria-controls="quickReportsList">
+      <button class="quick-reports-toggle" id="quickReportsToggle" type="button" aria-expanded="true" aria-controls="quickReportsBody">
         <span class="quick-reports-title-wrap"><span class="quick-reports-chevron" aria-hidden="true">▾</span><span>Daily Reports</span></span>
         <span class="quick-reports-count" id="quickReportsCount">0</span>
       </button>
     </h2>
-    <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
+    <div class="quick-reports-body" id="quickReportsBody">
+      <search class="quick-reports-filter" aria-label="Filter daily reports by date range">
+        <div class="quick-filter-row">
+          <div class="quick-filter-field">
+            <label class="quick-filter-label" for="reportDateFrom">From</label>
+            <input class="quick-date-input" id="reportDateFrom" name="report_from" type="date" aria-describedby="reportFilterStatus">
+          </div>
+          <div class="quick-filter-field">
+            <label class="quick-filter-label" for="reportDateTo">To</label>
+            <input class="quick-date-input" id="reportDateTo" name="report_to" type="date" aria-describedby="reportFilterStatus">
+          </div>
+        </div>
+        <div class="quick-filter-actions" id="quickFilterActions" hidden>
+          <span class="quick-filter-status" id="reportFilterStatus" role="status" aria-live="polite"></span>
+          <button class="quick-filter-clear" id="reportFilterClear" type="button" hidden>Clear dates</button>
+        </div>
+      </search>
+      <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
+    </div>
   </div>
   <ul class="tree" id="tree"></ul>
   <div class="developer-credit">Private · Hachiware</div>

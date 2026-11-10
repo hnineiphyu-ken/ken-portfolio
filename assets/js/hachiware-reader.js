@@ -10,8 +10,14 @@ const mainEl = document.getElementById('main');
 const repositoryEl = document.getElementById('repository');
 const quickReportsEl = document.getElementById('quickReports');
 const quickReportsToggle = document.getElementById('quickReportsToggle');
+const quickReportsBody = document.getElementById('quickReportsBody');
 const quickReportsCount = document.getElementById('quickReportsCount');
 const quickReportsList = document.getElementById('quickReportsList');
+const reportDateFrom = document.getElementById('reportDateFrom');
+const reportDateTo = document.getElementById('reportDateTo');
+const quickFilterActions = document.getElementById('quickFilterActions');
+const reportFilterStatus = document.getElementById('reportFilterStatus');
+const reportFilterClear = document.getElementById('reportFilterClear');
 let files = [];
 let dailyReports = [];
 let selectedPath = '';
@@ -235,9 +241,10 @@ function getSortIconSvg(dir) {
 }
 
 function syncQuickReportsCollapsed() {
-  if (!quickReportsToggle || !quickReportsList) return;
+  if (!quickReportsToggle) return;
   quickReportsToggle.setAttribute('aria-expanded', String(!quickReportsCollapsed));
-  quickReportsList.hidden = quickReportsCollapsed;
+  if (quickReportsBody) quickReportsBody.hidden = quickReportsCollapsed;
+  else if (quickReportsList) quickReportsList.hidden = quickReportsCollapsed;
 }
 
 if (quickReportsToggle) {
@@ -246,6 +253,34 @@ if (quickReportsToggle) {
     quickReportsCollapsed = !quickReportsCollapsed;
     try { localStorage.setItem('my_md_quick_reports_collapsed', quickReportsCollapsed ? '1' : '0'); } catch {}
     syncQuickReportsCollapsed();
+  });
+}
+
+function handleReportDateFilterChange() {
+  renderQuickReports();
+  refreshActiveDocumentNav();
+}
+
+if (reportDateFrom) {
+  reportDateFrom.addEventListener('change', handleReportDateFilterChange);
+}
+if (reportDateTo) {
+  reportDateTo.addEventListener('change', handleReportDateFilterChange);
+}
+if (reportFilterClear) {
+  reportFilterClear.addEventListener('click', () => {
+    if (reportDateFrom) {
+      reportDateFrom.value = '';
+      reportDateFrom.removeAttribute('aria-invalid');
+    }
+    if (reportDateTo) {
+      reportDateTo.value = '';
+      reportDateTo.removeAttribute('aria-invalid');
+    }
+    if (typeof document !== 'undefined' && document.activeElement === reportFilterClear && reportDateFrom && typeof reportDateFrom.focus === 'function') {
+      reportDateFrom.focus();
+    }
+    handleReportDateFilterChange();
   });
 }
 
@@ -302,6 +337,7 @@ async function loadTree() {
     const data = await requestJson('/api/markdown/tree');
     files = data.files;
     dailyReports = extractDailyReports(files);
+    syncReportDateBounds();
     repositoryEl.textContent = data.repository + ' · ' + data.branch;
     renderTree();
 
@@ -325,29 +361,99 @@ async function loadTree() {
   }
 }
 
-function renderQuickReports() {
-  if (!quickReportsEl || !quickReportsList || !quickReportsCount) return;
+function syncReportDateBounds() {
+  const oldest = dailyReports.length ? dailyReports[dailyReports.length - 1].date : '';
+  const newest = dailyReports.length ? dailyReports[0].date : '';
+  [reportDateFrom, reportDateTo].forEach(input => {
+    if (!input) return;
+    if (oldest) input.min = oldest;
+    else input.removeAttribute('min');
+    if (newest) input.max = newest;
+    else input.removeAttribute('max');
+  });
+}
+
+function getFilteredDailyReports() {
   const term = searchInput.value.trim().toLowerCase();
-  const visibleReports = term
-    ? dailyReports.filter(item =>
+  const fromDate = reportDateFrom ? reportDateFrom.value.trim() : '';
+  const toDate = reportDateTo ? reportDateTo.value.trim() : '';
+  const hasDateFilter = Boolean(fromDate || toDate);
+  const invalidRange = Boolean(fromDate && toDate && fromDate > toDate);
+
+  if (invalidRange) {
+    return { term, fromDate, toDate, hasDateFilter, invalidRange, items: [] };
+  }
+
+  const items = dailyReports.filter(item => {
+    if (fromDate && item.date < fromDate) return false;
+    if (toDate && item.date > toDate) return false;
+    if (term) {
+      return (
         item.date.toLowerCase().includes(term) ||
         item.path.toLowerCase().includes(term) ||
         item.weekday.toLowerCase().includes(term) ||
         item.shortDate.toLowerCase().includes(term) ||
         item.badge.toLowerCase().includes(term)
-      )
-    : dailyReports;
+      );
+    }
+    return true;
+  });
 
-  if (!dailyReports.length || (term && !visibleReports.length)) {
+  return { term, fromDate, toDate, hasDateFilter, invalidRange, items };
+}
+
+function renderQuickReports() {
+  if (!quickReportsEl || !quickReportsList || !quickReportsCount) return;
+  const { term, hasDateFilter, invalidRange, items: visibleReports } = getFilteredDailyReports();
+
+  [reportDateFrom, reportDateTo].forEach(input => {
+    if (!input) return;
+    if (invalidRange) input.setAttribute('aria-invalid', 'true');
+    else input.removeAttribute('aria-invalid');
+  });
+
+  if (!dailyReports.length || (term && !hasDateFilter && !visibleReports.length)) {
     quickReportsEl.hidden = true;
     quickReportsList.innerHTML = '';
     quickReportsCount.textContent = '0';
+    if (reportFilterStatus) {
+      reportFilterStatus.textContent = '';
+      reportFilterStatus.classList.remove('is-error');
+    }
+    if (reportFilterClear) reportFilterClear.hidden = true;
+    if (quickFilterActions) quickFilterActions.hidden = true;
     return;
   }
 
   quickReportsEl.hidden = false;
-  quickReportsCount.textContent = String(visibleReports.length);
+  quickReportsCount.textContent = hasDateFilter
+    ? visibleReports.length + '/' + dailyReports.length
+    : String(visibleReports.length);
+
+  let statusText = '';
+  if (invalidRange) {
+    statusText = 'Start date cannot be after end date.';
+  } else if (hasDateFilter) {
+    statusText = visibleReports.length + ' of ' + dailyReports.length + (dailyReports.length === 1 ? ' report' : ' reports');
+  }
+  if (reportFilterStatus) {
+    reportFilterStatus.textContent = statusText;
+    reportFilterStatus.classList.toggle('is-error', invalidRange);
+  }
+  if (reportFilterClear) reportFilterClear.hidden = !hasDateFilter;
+  if (quickFilterActions) quickFilterActions.hidden = !statusText && !hasDateFilter;
+
   quickReportsList.innerHTML = '';
+
+  if (!visibleReports.length) {
+    const emptyLi = document.createElement('li');
+    emptyLi.className = 'quick-reports-empty';
+    emptyLi.textContent = invalidRange
+      ? 'Adjust the From / To dates to view reports.'
+      : 'No daily reports match the selected date range.';
+    quickReportsList.appendChild(emptyLi);
+    return;
+  }
 
   let activeBtn = null;
   for (const report of visibleReports) {
@@ -613,23 +719,49 @@ function enableRootDrag(item, name, siblingNames) {
   });
 }
 
+function getNavigationReports(filePath) {
+  const filtered = getFilteredDailyReports();
+  if (filtered.hasDateFilter && !filtered.invalidRange && filtered.items.some(item => item.path === filePath)) {
+    return filtered.items;
+  }
+  return dailyReports;
+}
+
+function buildDateNavInnerHtml(older, newer) {
+  const prevAttrs = older
+    ? 'data-nav-path="' + escapeHtml(older.path) + '" title="Previous report (' + escapeHtml(older.date) + ')" aria-label="Previous report: ' + escapeHtml(older.date) + '"'
+    : 'aria-disabled="true" title="No older report" aria-label="Previous report unavailable"';
+  const nextAttrs = newer
+    ? 'data-nav-path="' + escapeHtml(newer.path) + '" title="Next report (' + escapeHtml(newer.date) + ')" aria-label="Next report: ' + escapeHtml(newer.date) + '"'
+    : 'aria-disabled="true" title="Already on latest report" aria-label="Next report unavailable"';
+
+  return '<button type="button" class="doc-nav-btn" ' + prevAttrs + '><span aria-hidden="true">‹</span> Prev</button>' +
+    '<button type="button" class="doc-nav-btn" ' + nextAttrs + '>Next <span aria-hidden="true">›</span></button>';
+}
+
+function refreshActiveDocumentNav() {
+  if (!selectedPath) return;
+  const navGroup = mainEl.querySelector('.doc-date-nav');
+  if (!navGroup) return;
+  const navReports = getNavigationReports(selectedPath);
+  const reportIndex = navReports.findIndex(item => item.path === selectedPath);
+  if (reportIndex === -1) return;
+  const newer = reportIndex > 0 ? navReports[reportIndex - 1] : null;
+  const older = reportIndex < navReports.length - 1 ? navReports[reportIndex + 1] : null;
+  navGroup.innerHTML = buildDateNavInnerHtml(older, newer);
+}
+
 function buildDocumentHeaderHtml(filePath) {
-  const reportIndex = dailyReports.findIndex(item => item.path === filePath);
+  const navReports = getNavigationReports(filePath);
+  const reportIndex = navReports.findIndex(item => item.path === filePath);
   let dateNavHtml = '';
   if (reportIndex !== -1) {
-    const newer = reportIndex > 0 ? dailyReports[reportIndex - 1] : null;
-    const older = reportIndex < dailyReports.length - 1 ? dailyReports[reportIndex + 1] : null;
-    const prevAttrs = older
-      ? 'data-nav-path="' + escapeHtml(older.path) + '" title="Previous report (' + escapeHtml(older.date) + ')" aria-label="Previous report: ' + escapeHtml(older.date) + '"'
-      : 'aria-disabled="true" title="No older report" aria-label="Previous report unavailable"';
-    const nextAttrs = newer
-      ? 'data-nav-path="' + escapeHtml(newer.path) + '" title="Next report (' + escapeHtml(newer.date) + ')" aria-label="Next report: ' + escapeHtml(newer.date) + '"'
-      : 'aria-disabled="true" title="Already on latest report" aria-label="Next report unavailable"';
+    const newer = reportIndex > 0 ? navReports[reportIndex - 1] : null;
+    const older = reportIndex < navReports.length - 1 ? navReports[reportIndex + 1] : null;
 
     dateNavHtml =
       '<div class="doc-date-nav" role="group" aria-label="Adjacent daily reports">' +
-        '<button type="button" class="doc-nav-btn" ' + prevAttrs + '><span aria-hidden="true">‹</span> Prev</button>' +
-        '<button type="button" class="doc-nav-btn" ' + nextAttrs + '>Next <span aria-hidden="true">›</span></button>' +
+        buildDateNavInnerHtml(older, newer) +
       '</div>';
   }
 
