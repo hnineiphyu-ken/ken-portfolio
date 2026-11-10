@@ -107,7 +107,7 @@ body.sidebar-closed .main { padding: 72px 40px 32px 88px; }
 @media (max-width: 1023px) {
 body { display: block; }
 .menu-btn { display: block; }
-.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(320px, 86vw); height: 100vh; height: 100dvh; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
+.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(352px, 92vw); height: 100vh; height: 100dvh; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
 body.sidebar-closed .sidebar { display: flex; }
 body.sidebar-open .sidebar { transform: translateX(0); }
 body.sidebar-open .sidebar-overlay { display: block; }
@@ -129,7 +129,14 @@ body.sidebar-open .menu-btn { display: none; }
 .quick-reports-chevron { display: inline-block; width: 12px; color: #57606a; transition: transform .15s ease; flex-shrink: 0; }
 .quick-reports-toggle[aria-expanded="false"] .quick-reports-chevron { transform: rotate(-90deg); }
 .quick-reports-count { font-size: 11px; font-weight: 600; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 999px; padding: 1px 7px; line-height: 1.4; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.quick-reports-body { max-block-size: min(460px, 58dvh); overflow-y: auto; overscroll-behavior: contain; }
 .quick-reports-body[hidden] { display: none; }
+.quick-view-tabs { display: flex; gap: 4px; padding: 0 6px; border-top: 1px solid #e1e4e8; background: #fff; }
+.quick-view-tab { flex: 1 1 0; position: relative; border: 0; background: transparent; color: #57606a; font-family: inherit; font-size: 12px; font-weight: 600; line-height: 1; padding: 8px 6px; min-block-size: 32px; cursor: pointer; text-align: center; transition: color .15s ease, background .15s ease; }
+.quick-view-tab:hover { color: #24292f; background: #f6f8fa; }
+.quick-view-tab[aria-selected="true"] { color: #0969da; }
+.quick-view-tab[aria-selected="true"]::after { content: ""; position: absolute; inset: auto 4px 0; border-block-end: 2.5px solid #0969da; border-radius: 2px 2px 0 0; }
+.quick-view-panel[hidden] { display: none; }
 .quick-reports-filter { display: block; padding: 8px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
 .quick-filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); gap: 6px; }
 .quick-filter-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -143,8 +150,33 @@ body.sidebar-open .menu-btn { display: none; }
 .quick-filter-clear { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11px; font-weight: 500; line-height: 1; padding: 4px 8px; min-block-size: 24px; border-radius: 5px; cursor: pointer; flex-shrink: 0; transition: all .15s ease; }
 .quick-filter-clear:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
 .quick-filter-clear[hidden] { display: none; }
-.quick-reports-list { list-style: none; max-block-size: min(156px, 24dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 4px 6px 6px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 2px; }
-.quick-reports-empty { padding: 10px 8px; font-size: 12.5px; color: #57606a; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.quick-reports-list { list-style: none; padding: 4px 6px 6px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 2px; }
+.quick-pager { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-top: 1px solid #e1e4e8; background: #f6f8fa; }
+.quick-pager[hidden] { display: none; }
+.quick-pager-btn { border: 1px solid #d0d7de; background: #fff; color: #24292f; font-size: 11.5px; font-weight: 500; line-height: 1; padding: 4px 8px; min-block-size: 26px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all .15s ease; user-select: none; }
+.quick-pager-btn:hover:not([aria-disabled="true"]) { border-color: #0969da; color: #0969da; background: #f3f4f6; }
+.quick-pager-btn[aria-disabled="true"] { color: #8c959f; background: #f6f8fa; cursor: not-allowed; opacity: .7; }
+.quick-pager-info { font-size: 11px; color: #57606a; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.quick-period-nav { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-top: 1px solid #e1e4e8; background: #fff; }
+.quick-period-btn { border: 1px solid #d0d7de; background: #f6f8fa; color: #24292f; font-size: 12px; font-weight: 600; line-height: 1; min-block-size: 26px; min-inline-size: 28px; padding: 3px 7px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .15s ease; flex-shrink: 0; user-select: none; }
+.quick-period-btn:hover:not([aria-disabled="true"]) { border-color: #0969da; color: #0969da; background: #f0f6ff; }
+.quick-period-btn[aria-disabled="true"] { color: #8c959f; cursor: not-allowed; opacity: .65; }
+.quick-period-label { font-size: 12px; font-weight: 600; color: #24292f; text-align: center; font-variant-numeric: tabular-nums; min-inline-size: 0; }
+.quick-cal-wrap { padding: 6px 8px 8px; border-top: 1px solid #e1e4e8; background: #fff; }
+.quick-cal-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-bottom: 4px; }
+.quick-cal-weekday { font-size: 10.5px; font-weight: 600; color: #57606a; text-align: center; line-height: 1.4; user-select: none; }
+.quick-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.quick-cal-pad { min-block-size: 28px; }
+.quick-cal-day { position: relative; width: 100%; min-block-size: 30px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #24292f; font-family: inherit; font-size: 11.5px; font-variant-numeric: tabular-nums; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px 1px; line-height: 1.1; }
+span.quick-cal-day.is-empty { color: #8c959f; opacity: .65; user-select: none; }
+span.quick-cal-day.is-today { border-color: #d0d7de; opacity: .95; font-weight: 600; }
+button.quick-cal-day.has-report { cursor: pointer; background: #eef6ff; color: #0969da; font-weight: 600; border-color: #b6d7f5; transition: background .15s ease, border-color .15s ease, scale .1s ease; }
+button.quick-cal-day.has-report:hover { background: #ddf4ff; border-color: #0969da; }
+button.quick-cal-day.has-report:active { scale: 0.96; }
+button.quick-cal-day.has-report.is-today { border-color: #0969da; box-shadow: inset 0 0 0 1px rgba(9,105,218,.25); }
+button.quick-cal-day[aria-current="date"] { background: #0969da; border-color: #0969da; color: #fff; }
+button.quick-cal-day.has-report::after { content: ""; width: 4px; height: 4px; border-radius: 999px; background: currentColor; margin-top: 2px; opacity: .85; }
+.quick-reports-empty { padding: 10px 8px; font-size: 12.5px; color: #57606a; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #fff; border-top: 1px solid #e1e4e8; }
 .quick-date-btn { width: 100%; border: 0; background: transparent; color: #24292f; font-size: 13px; text-align: left; padding: 5px 8px; min-block-size: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: background .15s ease, scale .1s ease; }
 .quick-date-btn:hover { background: #f0f1f3; }
 .quick-date-btn:active { scale: 0.99; }
@@ -182,9 +214,12 @@ body.sidebar-open .menu-btn { display: none; }
 }
 @media (pointer: coarse) {
 .quick-reports-toggle { min-block-size: 44px; }
+.quick-view-tab { min-block-size: 44px; font-size: 13px; }
 .quick-filter-row { grid-template-columns: 1fr; }
 .quick-date-input { font-size: max(1rem, 1em); min-block-size: 44px; padding: 8px 10px; }
 .quick-filter-clear { min-block-size: 44px; padding: 8px 12px; font-size: 13px; }
+.quick-pager-btn, .quick-period-btn { min-block-size: 44px; min-inline-size: 44px; padding: 8px 10px; font-size: 13px; }
+.quick-cal-day { min-block-size: 44px; font-size: 12.5px; }
 .quick-date-btn { min-block-size: 44px; padding: 8px 10px; }
 .doc-copy-btn, .doc-nav-btn { min-block-size: 44px; padding: 8px 12px; }
 }
@@ -215,6 +250,11 @@ body.sidebar-open .menu-btn { display: none; }
       </button>
     </h2>
     <div class="quick-reports-body" id="quickReportsBody">
+      <div class="quick-view-tabs" id="quickViewTabs" role="tablist" aria-label="Daily reports view">
+        <button class="quick-view-tab" id="quickTabList" type="button" role="tab" data-quick-view="list" aria-selected="true" tabindex="0">List (5)</button>
+        <button class="quick-view-tab" id="quickTabWeek" type="button" role="tab" data-quick-view="week" aria-selected="false" tabindex="-1">Week</button>
+        <button class="quick-view-tab" id="quickTabMonth" type="button" role="tab" data-quick-view="month" aria-selected="false" tabindex="-1">Month</button>
+      </div>
       <search class="quick-reports-filter" aria-label="Filter daily reports by date range">
         <div class="quick-filter-row">
           <div class="quick-filter-field">
@@ -231,7 +271,16 @@ body.sidebar-open .menu-btn { display: none; }
           <button class="quick-filter-clear" id="reportFilterClear" type="button" hidden>Clear dates</button>
         </div>
       </search>
-      <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
+      <div class="quick-view-panel" id="quickPanelList" role="tabpanel" aria-labelledby="quickTabList">
+        <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
+        <nav class="quick-pager" id="quickListPagination" aria-label="Daily reports pages" hidden>
+          <button class="quick-pager-btn" id="quickPagePrev" type="button" aria-label="Prev page" aria-disabled="true"><span aria-hidden="true">‹</span> Prev</button>
+          <span class="quick-pager-info" id="quickPageInfo">Page 1 / 1</span>
+          <button class="quick-pager-btn" id="quickPageNext" type="button" aria-label="Next page" aria-disabled="true">Next <span aria-hidden="true">›</span></button>
+        </nav>
+      </div>
+      <div class="quick-view-panel" id="quickPanelWeek" role="tabpanel" aria-labelledby="quickTabWeek" hidden></div>
+      <div class="quick-view-panel" id="quickPanelMonth" role="tabpanel" aria-labelledby="quickTabMonth" hidden></div>
     </div>
   </div>
   <ul class="tree" id="tree"></ul>

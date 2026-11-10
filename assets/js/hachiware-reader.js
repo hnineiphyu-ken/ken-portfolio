@@ -18,11 +18,31 @@ const reportDateTo = document.getElementById('reportDateTo');
 const quickFilterActions = document.getElementById('quickFilterActions');
 const reportFilterStatus = document.getElementById('reportFilterStatus');
 const reportFilterClear = document.getElementById('reportFilterClear');
+const quickViewTabsEl = document.getElementById('quickViewTabs');
+const quickPanelList = document.getElementById('quickPanelList');
+const quickPanelWeek = document.getElementById('quickPanelWeek');
+const quickPanelMonth = document.getElementById('quickPanelMonth');
+const quickListPagination = document.getElementById('quickListPagination');
+const quickPagePrev = document.getElementById('quickPagePrev');
+const quickPageNext = document.getElementById('quickPageNext');
+const quickPageInfo = document.getElementById('quickPageInfo');
+
+const QUICK_REPORT_PAGE_SIZE = 5;
+const QUICK_VIEW_MODES = ['list', 'week', 'month'];
+const QUICK_CAL_WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const MONTH_YEAR_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
+const LONG_MONTH_FMT = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+
 let files = [];
 let dailyReports = [];
 let selectedPath = '';
 let mermaidInitialized = false;
 let quickReportsCollapsed = false;
+let quickViewMode = 'list';
+let quickReportPage = 1;
+let quickActiveWeekStart = '';
+let quickActiveMonth = '';
+let todayIsoCache = '';
 let activeLoadToken = 0;
 let activeFetchController = null;
 
@@ -35,6 +55,8 @@ try {
   rootManualOrder = JSON.parse(localStorage.getItem('my_md_root_order') || '[]');
   folderSortDirs = JSON.parse(localStorage.getItem('my_md_folder_sorts') || '{}');
   quickReportsCollapsed = localStorage.getItem('my_md_quick_reports_collapsed') === '1';
+  const savedQuickView = localStorage.getItem('my_md_quick_view_mode');
+  if (QUICK_VIEW_MODES.includes(savedQuickView)) quickViewMode = savedQuickView;
 } catch {}
 
 let currentMarkdownText = '';
@@ -60,22 +82,16 @@ function getTodayAndYesterdayIso() {
 }
 
 function formatReportDateMeta(isoDate) {
-  const parts = isoDate.split('-').map(Number);
-  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
-  const [year, month, day] = parts;
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) return null;
   if (typeof Temporal !== 'undefined') {
-    try {
-      const plain = Temporal.PlainDate.from({ year, month, day }, { overflow: 'reject' });
-      return {
-        weekday: plain.toLocaleString('en-US', { weekday: 'short' }),
-        shortDate: plain.toLocaleString('en-US', { month: 'short', day: 'numeric' })
-      };
-    } catch {
-      return null;
-    }
+    const plain = Temporal.PlainDate.from({ year: parts.year, month: parts.month, day: parts.day });
+    return {
+      weekday: plain.toLocaleString('en-US', { weekday: 'short' }),
+      shortDate: plain.toLocaleString('en-US', { month: 'short', day: 'numeric' })
+    };
   }
-  const d = new Date(year, month - 1, day);
-  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  const d = new Date(parts.year, parts.month - 1, parts.day);
   return {
     weekday: SHORT_WEEKDAY_FMT.format(d),
     shortDate: SHORT_DATE_FMT.format(d)
@@ -84,6 +100,7 @@ function formatReportDateMeta(isoDate) {
 
 function extractDailyReports(entries) {
   const { today, yesterday } = getTodayAndYesterdayIso();
+  todayIsoCache = today;
   const byDate = new Map();
 
   for (const entry of entries) {
@@ -113,6 +130,112 @@ function extractDailyReports(entries) {
   }
 
   return Array.from(byDate.values()).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function toIsoDateString(year, month, day) {
+  return [
+    year,
+    String(month).padStart(2, '0'),
+    String(day).padStart(2, '0')
+  ].join('-');
+}
+
+function parseIsoDateParts(isoDate) {
+  const parts = isoDate.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  const [year, month, day] = parts;
+  if (typeof Temporal !== 'undefined') {
+    try {
+      const plain = Temporal.PlainDate.from({ year, month, day }, { overflow: 'reject' });
+      return { year: plain.year, month: plain.month, day: plain.day, dayOfWeek: plain.dayOfWeek };
+    } catch {
+      return null;
+    }
+  }
+  const d = new Date(year, month - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  const jsDay = d.getDay();
+  return { year, month, day, dayOfWeek: jsDay === 0 ? 7 : jsDay };
+}
+
+function shiftIsoDays(isoDate, deltaDays) {
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) return '';
+  if (typeof Temporal !== 'undefined') {
+    const plain = Temporal.PlainDate.from({ year: parts.year, month: parts.month, day: parts.day });
+    const shifted = deltaDays >= 0
+      ? plain.add({ days: deltaDays })
+      : plain.subtract({ days: -deltaDays });
+    return shifted.toString();
+  }
+  const d = new Date(parts.year, parts.month - 1, parts.day + deltaDays);
+  return toIsoDateString(d.getFullYear(), d.getMonth() + 1, d.getDate());
+}
+
+function getWeekStartIso(isoDate) {
+  const parts = parseIsoDateParts(isoDate);
+  if (!parts) return '';
+  return shiftIsoDays(isoDate, -(parts.dayOfWeek - 1));
+}
+
+function shiftYearMonth(yearMonth, deltaMonths) {
+  const parts = yearMonth.split('-').map(Number);
+  if (parts.length !== 2 || parts.some(Number.isNaN)) return '';
+  const [year, month] = parts;
+  if (typeof Temporal !== 'undefined') {
+    const ym = Temporal.PlainYearMonth.from({ year, month, calendar: 'iso8601' });
+    const shifted = deltaMonths >= 0
+      ? ym.add({ months: deltaMonths })
+      : ym.subtract({ months: -deltaMonths });
+    return shifted.year + '-' + String(shifted.month).padStart(2, '0');
+  }
+  const d = new Date(year, month - 1 + deltaMonths, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function getMonthMetadata(yearMonth) {
+  const parts = yearMonth.split('-').map(Number);
+  if (parts.length !== 2 || parts.some(Number.isNaN)) return null;
+  const [year, month] = parts;
+  if (typeof Temporal !== 'undefined') {
+    const ym = Temporal.PlainYearMonth.from({ year, month, calendar: 'iso8601' });
+    const firstDay = ym.toPlainDate({ day: 1 });
+    return {
+      year: ym.year,
+      month: ym.month,
+      firstWeekday: firstDay.dayOfWeek,
+      daysInMonth: ym.daysInMonth,
+      label: firstDay.toLocaleString('en-US', { month: 'short', year: 'numeric' }),
+      longLabel: firstDay.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    };
+  }
+  const firstDate = new Date(year, month - 1, 1);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const jsDay = firstDate.getDay();
+  return {
+    year,
+    month,
+    firstWeekday: jsDay === 0 ? 7 : jsDay,
+    daysInMonth,
+    label: MONTH_YEAR_FMT.format(firstDate),
+    longLabel: LONG_MONTH_FMT.format(firstDate)
+  };
+}
+
+function formatWeekRangeLabel(weekStartIso, weekEndIso) {
+  const start = parseIsoDateParts(weekStartIso);
+  const end = parseIsoDateParts(weekEndIso);
+  if (!start || !end) return weekStartIso + ' – ' + weekEndIso;
+  const startMeta = formatReportDateMeta(weekStartIso);
+  const endMeta = formatReportDateMeta(weekEndIso);
+  if (!startMeta || !endMeta) return weekStartIso + ' – ' + weekEndIso;
+  if (start.year === end.year && start.month === end.month) {
+    return startMeta.shortDate + ' – ' + end.day + ', ' + end.year;
+  }
+  if (start.year === end.year) {
+    return startMeta.shortDate + ' – ' + endMeta.shortDate + ', ' + end.year;
+  }
+  return startMeta.shortDate + ', ' + start.year + ' – ' + endMeta.shortDate + ', ' + end.year;
 }
 
 function getDefaultFolderSort(path) {
@@ -256,9 +379,95 @@ if (quickReportsToggle) {
   });
 }
 
+function syncQuickViewTabsUi() {
+  if (!quickViewTabsEl) return;
+  const tabs = Array.from(quickViewTabsEl.querySelectorAll('[role="tab"]'));
+  for (const tab of tabs) {
+    const active = tab.dataset.quickView === quickViewMode;
+    tab.setAttribute('aria-selected', String(active));
+    tab.setAttribute('tabindex', active ? '0' : '-1');
+  }
+  if (quickPanelList) quickPanelList.hidden = quickViewMode !== 'list';
+  if (quickPanelWeek) quickPanelWeek.hidden = quickViewMode !== 'week';
+  if (quickPanelMonth) quickPanelMonth.hidden = quickViewMode !== 'month';
+}
+
+function setQuickViewMode(mode, { focusTab = false } = {}) {
+  if (!QUICK_VIEW_MODES.includes(mode)) return;
+  quickViewMode = mode;
+  try { localStorage.setItem('my_md_quick_view_mode', mode); } catch {}
+  syncQuickViewTabsUi();
+  if (focusTab && quickViewTabsEl) {
+    const targetTab = quickViewTabsEl.querySelector('[data-quick-view="' + mode + '"]');
+    if (targetTab && typeof targetTab.focus === 'function') targetTab.focus();
+  }
+  renderQuickReports();
+}
+
+function resetQuickViewOnFilterChange() {
+  quickReportPage = 1;
+  const { items: visibleReports } = getFilteredDailyReports();
+  if (!visibleReports.length) return;
+  if (quickActiveWeekStart) {
+    const weekEnd = shiftIsoDays(quickActiveWeekStart, 6);
+    if (!visibleReports.some(r => r.date >= quickActiveWeekStart && r.date <= weekEnd)) {
+      quickActiveWeekStart = getWeekStartIso(visibleReports[0].date);
+    }
+  } else {
+    quickActiveWeekStart = getWeekStartIso(visibleReports[0].date);
+  }
+  if (quickActiveMonth) {
+    if (!visibleReports.some(r => r.date.slice(0, 7) === quickActiveMonth)) {
+      quickActiveMonth = visibleReports[0].date.slice(0, 7);
+    }
+  } else {
+    quickActiveMonth = visibleReports[0].date.slice(0, 7);
+  }
+}
+
 function handleReportDateFilterChange() {
+  resetQuickViewOnFilterChange();
   renderQuickReports();
   refreshActiveDocumentNav();
+}
+
+if (quickViewTabsEl) {
+  syncQuickViewTabsUi();
+  quickViewTabsEl.addEventListener('click', (event) => {
+    const tab = event.target.closest('[role="tab"]');
+    if (!tab || !tab.dataset.quickView) return;
+    setQuickViewMode(tab.dataset.quickView);
+  });
+  quickViewTabsEl.addEventListener('keydown', (event) => {
+    const tabs = Array.from(quickViewTabsEl.querySelectorAll('[role="tab"]'));
+    if (!tabs.length) return;
+    const currentIdx = tabs.indexOf(event.target.closest('[role="tab"]'));
+    if (currentIdx === -1) return;
+    let nextIdx = -1;
+    if (event.key === 'ArrowRight') nextIdx = (currentIdx + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') nextIdx = 0;
+    else if (event.key === 'End') nextIdx = tabs.length - 1;
+    if (nextIdx === -1) return;
+    event.preventDefault();
+    setQuickViewMode(tabs[nextIdx].dataset.quickView, { focusTab: true });
+  });
+}
+
+if (quickPagePrev) {
+  quickPagePrev.addEventListener('click', () => {
+    if (quickPagePrev.getAttribute('aria-disabled') === 'true') return;
+    quickReportPage = Math.max(1, quickReportPage - 1);
+    renderQuickReports();
+  });
+}
+
+if (quickPageNext) {
+  quickPageNext.addEventListener('click', () => {
+    if (quickPageNext.getAttribute('aria-disabled') === 'true') return;
+    quickReportPage += 1;
+    renderQuickReports();
+  });
 }
 
 if (reportDateFrom) {
@@ -298,7 +507,10 @@ sidebarCloseBtn.addEventListener('click', () => {
   if (wasDrawer) menuBtn.focus();
 });
 sidebarOverlay.addEventListener('click', closeSidebar);
-searchInput.addEventListener('input', renderTree);
+searchInput.addEventListener('input', () => {
+  resetQuickViewOnFilterChange();
+  renderTree();
+});
 refreshBtn.addEventListener('click', loadTree);
 
 function handleHashNavigation() {
@@ -402,8 +614,318 @@ function getFilteredDailyReports() {
   return { term, fromDate, toDate, hasDateFilter, invalidRange, items };
 }
 
+function syncQuickViewToReport(filePath) {
+  const report = dailyReports.find(item => item.path === filePath);
+  if (!report) return;
+  quickActiveWeekStart = getWeekStartIso(report.date);
+  quickActiveMonth = report.date.slice(0, 7);
+  const { items: visibleReports } = getFilteredDailyReports();
+  const visibleIdx = visibleReports.findIndex(item => item.path === filePath);
+  if (visibleIdx !== -1) {
+    quickReportPage = Math.floor(visibleIdx / QUICK_REPORT_PAGE_SIZE) + 1;
+  }
+}
+
+function createQuickEmptyElement(message, tagName = 'div') {
+  const el = document.createElement(tagName);
+  el.className = 'quick-reports-empty';
+  el.textContent = message;
+  return el;
+}
+
+function createQuickDateButton(report) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'quick-date-btn';
+  btn.dataset.path = report.path;
+
+  if (report.path === selectedPath) {
+    btn.setAttribute('aria-current', 'date');
+  }
+
+  const labelParts = [report.date];
+  if (report.badge) labelParts.push(report.badge);
+  if (report.weekday || report.shortDate) labelParts.push((report.weekday + ' ' + report.shortDate).trim());
+  btn.setAttribute('aria-label', 'Open report ' + labelParts.join(', '));
+
+  const mainSpan = document.createElement('span');
+  mainSpan.className = 'quick-date-main';
+
+  const isoSpan = document.createElement('span');
+  isoSpan.className = 'quick-date-iso';
+  isoSpan.textContent = report.date;
+  mainSpan.appendChild(isoSpan);
+
+  if (report.badge) {
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'quick-date-badge ' + (report.badge === 'Today' ? 'is-today' : 'is-yesterday');
+    badgeSpan.textContent = report.badge;
+    mainSpan.appendChild(badgeSpan);
+  }
+
+  const metaSpan = document.createElement('span');
+  metaSpan.className = 'quick-date-meta';
+  metaSpan.textContent = report.weekday ? (report.weekday + ' · ' + report.shortDate) : report.shortDate;
+
+  btn.append(mainSpan, metaSpan);
+  btn.addEventListener('click', () => openRemoteFile(report.path));
+  return btn;
+}
+
+function createQuickPeriodNav({ label, prevLabel, nextLabel, hasPrev, hasNext, onPrev, onNext }) {
+  const nav = document.createElement('div');
+  nav.className = 'quick-period-nav';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'quick-period-btn';
+  prevBtn.setAttribute('aria-label', prevLabel);
+  if (!hasPrev) prevBtn.setAttribute('aria-disabled', 'true');
+  prevBtn.innerHTML = '<span aria-hidden="true">‹</span>';
+  prevBtn.addEventListener('click', () => {
+    if (prevBtn.getAttribute('aria-disabled') === 'true') return;
+    onPrev();
+  });
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'quick-period-label';
+  labelEl.textContent = label;
+
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'quick-period-btn';
+  nextBtn.setAttribute('aria-label', nextLabel);
+  if (!hasNext) nextBtn.setAttribute('aria-disabled', 'true');
+  nextBtn.innerHTML = '<span aria-hidden="true">›</span>';
+  nextBtn.addEventListener('click', () => {
+    if (nextBtn.getAttribute('aria-disabled') === 'true') return;
+    onNext();
+  });
+
+  nav.append(prevBtn, labelEl, nextBtn);
+  return nav;
+}
+
+function createWeekdaysRow() {
+  const row = document.createElement('div');
+  row.className = 'quick-cal-weekdays';
+  row.setAttribute('aria-hidden', 'true');
+  for (const label of QUICK_CAL_WEEKDAYS) {
+    const cell = document.createElement('span');
+    cell.className = 'quick-cal-weekday';
+    cell.textContent = label;
+    row.appendChild(cell);
+  }
+  return row;
+}
+
+function createQuickCalendarDayNode({ day, isoDate, longMonthLabel, report }) {
+  const isToday = Boolean(todayIsoCache && isoDate === todayIsoCache);
+  if (!report) {
+    const emptyDay = document.createElement('span');
+    emptyDay.className = 'quick-cal-day is-empty' + (isToday ? ' is-today' : '');
+    emptyDay.textContent = String(day);
+    return emptyDay;
+  }
+
+  const dayBtn = document.createElement('button');
+  dayBtn.type = 'button';
+  dayBtn.className = 'quick-cal-day has-report' + (isToday ? ' is-today' : '');
+  dayBtn.dataset.path = report.path;
+  if (report.path === selectedPath) {
+    dayBtn.setAttribute('aria-current', 'date');
+  }
+  const labelParts = [String(day) + ', ' + longMonthLabel];
+  if (report.badge) labelParts.push(report.badge);
+  dayBtn.setAttribute('aria-label', labelParts.join(', ') + ' — Open report');
+  dayBtn.textContent = String(day);
+  dayBtn.addEventListener('click', () => openRemoteFile(report.path));
+  return dayBtn;
+}
+
+function renderQuickListView(visibleReports, emptyMsg) {
+  quickReportsList.innerHTML = '';
+
+  if (!visibleReports.length) {
+    if (quickListPagination) quickListPagination.hidden = true;
+    quickReportsList.appendChild(createQuickEmptyElement(emptyMsg, 'li'));
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(visibleReports.length / QUICK_REPORT_PAGE_SIZE));
+  if (quickReportPage < 1) quickReportPage = 1;
+  if (quickReportPage > totalPages) quickReportPage = totalPages;
+
+  const startIdx = (quickReportPage - 1) * QUICK_REPORT_PAGE_SIZE;
+  const pageReports = visibleReports.slice(startIdx, startIdx + QUICK_REPORT_PAGE_SIZE);
+
+  for (const report of pageReports) {
+    const li = document.createElement('li');
+    li.appendChild(createQuickDateButton(report));
+    quickReportsList.appendChild(li);
+  }
+
+  if (quickListPagination) {
+    quickListPagination.hidden = totalPages <= 1;
+    if (quickPageInfo) quickPageInfo.textContent = 'Page ' + quickReportPage + ' / ' + totalPages;
+    if (quickPagePrev) {
+      if (quickReportPage <= 1) quickPagePrev.setAttribute('aria-disabled', 'true');
+      else quickPagePrev.removeAttribute('aria-disabled');
+    }
+    if (quickPageNext) {
+      if (quickReportPage >= totalPages) quickPageNext.setAttribute('aria-disabled', 'true');
+      else quickPageNext.removeAttribute('aria-disabled');
+    }
+  }
+}
+
+function renderQuickWeekView(visibleReports, byDateMap, emptyMsg) {
+  if (!quickPanelWeek) return;
+  quickPanelWeek.innerHTML = '';
+
+  if (!visibleReports.length) {
+    quickPanelWeek.appendChild(createQuickEmptyElement(emptyMsg));
+    return;
+  }
+
+  const minWeek = getWeekStartIso(visibleReports[visibleReports.length - 1].date);
+  const maxWeek = getWeekStartIso(visibleReports[0].date);
+  if (!quickActiveWeekStart || quickActiveWeekStart < minWeek || quickActiveWeekStart > maxWeek) {
+    quickActiveWeekStart = maxWeek;
+  }
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    weekDates.push(shiftIsoDays(quickActiveWeekStart, i));
+  }
+  const weekEnd = weekDates[6];
+  const weekReports = weekDates.slice().reverse().map(d => byDateMap.get(d)).filter(Boolean);
+
+  quickPanelWeek.appendChild(createQuickPeriodNav({
+    label: formatWeekRangeLabel(quickActiveWeekStart, weekEnd) + ' (' + weekReports.length + ')',
+    prevLabel: 'Previous week',
+    nextLabel: 'Next week',
+    hasPrev: quickActiveWeekStart > minWeek,
+    hasNext: quickActiveWeekStart < maxWeek,
+    onPrev: () => {
+      quickActiveWeekStart = shiftIsoDays(quickActiveWeekStart, -7);
+      renderQuickReports();
+    },
+    onNext: () => {
+      quickActiveWeekStart = shiftIsoDays(quickActiveWeekStart, 7);
+      renderQuickReports();
+    }
+  }));
+
+  const calWrap = document.createElement('div');
+  calWrap.className = 'quick-cal-wrap';
+  calWrap.appendChild(createWeekdaysRow());
+
+  const stripGrid = document.createElement('div');
+  stripGrid.className = 'quick-cal-grid';
+  for (const isoDate of weekDates) {
+    const parts = parseIsoDateParts(isoDate);
+    const meta = getMonthMetadata(isoDate.slice(0, 7));
+    stripGrid.appendChild(createQuickCalendarDayNode({
+      day: parts ? parts.day : '',
+      isoDate,
+      longMonthLabel: meta ? meta.longLabel : isoDate.slice(0, 7),
+      report: byDateMap.get(isoDate) || null
+    }));
+  }
+  calWrap.appendChild(stripGrid);
+  quickPanelWeek.appendChild(calWrap);
+
+  if (!weekReports.length) {
+    quickPanelWeek.appendChild(createQuickEmptyElement('No reports in this week.'));
+    return;
+  }
+
+  const ul = document.createElement('ul');
+  ul.className = 'quick-reports-list';
+  ul.setAttribute('role', 'list');
+  for (const report of weekReports) {
+    const li = document.createElement('li');
+    li.appendChild(createQuickDateButton(report));
+    ul.appendChild(li);
+  }
+  quickPanelWeek.appendChild(ul);
+}
+
+function renderQuickMonthView(visibleReports, byDateMap, emptyMsg) {
+  if (!quickPanelMonth) return;
+  quickPanelMonth.innerHTML = '';
+
+  if (!visibleReports.length) {
+    quickPanelMonth.appendChild(createQuickEmptyElement(emptyMsg));
+    return;
+  }
+
+  const minMonth = visibleReports[visibleReports.length - 1].date.slice(0, 7);
+  const maxMonth = visibleReports[0].date.slice(0, 7);
+  if (!quickActiveMonth || quickActiveMonth < minMonth || quickActiveMonth > maxMonth) {
+    quickActiveMonth = maxMonth;
+  }
+
+  const meta = getMonthMetadata(quickActiveMonth);
+  if (!meta) return;
+
+  let monthReportCount = 0;
+  for (const report of visibleReports) {
+    if (report.date.slice(0, 7) === quickActiveMonth) monthReportCount++;
+  }
+
+  quickPanelMonth.appendChild(createQuickPeriodNav({
+    label: meta.label + ' (' + monthReportCount + ')',
+    prevLabel: 'Previous month',
+    nextLabel: 'Next month',
+    hasPrev: quickActiveMonth > minMonth,
+    hasNext: quickActiveMonth < maxMonth,
+    onPrev: () => {
+      quickActiveMonth = shiftYearMonth(quickActiveMonth, -1);
+      renderQuickReports();
+    },
+    onNext: () => {
+      quickActiveMonth = shiftYearMonth(quickActiveMonth, 1);
+      renderQuickReports();
+    }
+  }));
+
+  const calWrap = document.createElement('div');
+  calWrap.className = 'quick-cal-wrap';
+  calWrap.appendChild(createWeekdaysRow());
+
+  const grid = document.createElement('div');
+  grid.className = 'quick-cal-grid';
+
+  for (let pad = 1; pad < meta.firstWeekday; pad++) {
+    const padSpan = document.createElement('span');
+    padSpan.className = 'quick-cal-pad';
+    padSpan.setAttribute('aria-hidden', 'true');
+    grid.appendChild(padSpan);
+  }
+
+  for (let day = 1; day <= meta.daysInMonth; day++) {
+    const isoDate = toIsoDateString(meta.year, meta.month, day);
+    grid.appendChild(createQuickCalendarDayNode({
+      day,
+      isoDate,
+      longMonthLabel: meta.longLabel,
+      report: byDateMap.get(isoDate) || null
+    }));
+  }
+
+  calWrap.appendChild(grid);
+  quickPanelMonth.appendChild(calWrap);
+
+  if (monthReportCount === 0) {
+    quickPanelMonth.appendChild(createQuickEmptyElement('No reports in ' + meta.label + '.'));
+  }
+}
+
 function renderQuickReports() {
   if (!quickReportsEl || !quickReportsList || !quickReportsCount) return;
+  syncQuickViewTabsUi();
   const { term, hasDateFilter, invalidRange, items: visibleReports } = getFilteredDailyReports();
 
   [reportDateFrom, reportDateTo].forEach(input => {
@@ -415,6 +937,9 @@ function renderQuickReports() {
   if (!dailyReports.length || (term && !hasDateFilter && !visibleReports.length)) {
     quickReportsEl.hidden = true;
     quickReportsList.innerHTML = '';
+    if (quickListPagination) quickListPagination.hidden = true;
+    if (quickPanelWeek) quickPanelWeek.innerHTML = '';
+    if (quickPanelMonth) quickPanelMonth.innerHTML = '';
     quickReportsCount.textContent = '0';
     if (reportFilterStatus) {
       reportFilterStatus.textContent = '';
@@ -443,63 +968,21 @@ function renderQuickReports() {
   if (reportFilterClear) reportFilterClear.hidden = !hasDateFilter;
   if (quickFilterActions) quickFilterActions.hidden = !statusText && !hasDateFilter;
 
-  quickReportsList.innerHTML = '';
+  const emptyMsg = invalidRange
+    ? 'Adjust the From / To dates to view reports.'
+    : 'No daily reports match the selected date range.';
 
-  if (!visibleReports.length) {
-    const emptyLi = document.createElement('li');
-    emptyLi.className = 'quick-reports-empty';
-    emptyLi.textContent = invalidRange
-      ? 'Adjust the From / To dates to view reports.'
-      : 'No daily reports match the selected date range.';
-    quickReportsList.appendChild(emptyLi);
-    return;
-  }
-
-  let activeBtn = null;
+  const byDateMap = new Map();
   for (const report of visibleReports) {
-    const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'quick-date-btn';
-    btn.dataset.path = report.path;
-
-    if (report.path === selectedPath) {
-      btn.setAttribute('aria-current', 'date');
-      activeBtn = btn;
-    }
-
-    const labelParts = [report.date];
-    if (report.badge) labelParts.push(report.badge);
-    if (report.weekday || report.shortDate) labelParts.push((report.weekday + ' ' + report.shortDate).trim());
-    btn.setAttribute('aria-label', 'Open report ' + labelParts.join(', '));
-
-    const mainSpan = document.createElement('span');
-    mainSpan.className = 'quick-date-main';
-
-    const isoSpan = document.createElement('span');
-    isoSpan.className = 'quick-date-iso';
-    isoSpan.textContent = report.date;
-    mainSpan.appendChild(isoSpan);
-
-    if (report.badge) {
-      const badgeSpan = document.createElement('span');
-      badgeSpan.className = 'quick-date-badge ' + (report.badge === 'Today' ? 'is-today' : 'is-yesterday');
-      badgeSpan.textContent = report.badge;
-      mainSpan.appendChild(badgeSpan);
-    }
-
-    const metaSpan = document.createElement('span');
-    metaSpan.className = 'quick-date-meta';
-    metaSpan.textContent = report.weekday ? (report.weekday + ' · ' + report.shortDate) : report.shortDate;
-
-    btn.append(mainSpan, metaSpan);
-    btn.addEventListener('click', () => openRemoteFile(report.path));
-    li.appendChild(btn);
-    quickReportsList.appendChild(li);
+    byDateMap.set(report.date, report);
   }
 
-  if (activeBtn && !quickReportsCollapsed && typeof activeBtn.scrollIntoView === 'function') {
-    activeBtn.scrollIntoView({ block: 'nearest' });
+  if (quickViewMode === 'week') {
+    renderQuickWeekView(visibleReports, byDateMap, emptyMsg);
+  } else if (quickViewMode === 'month') {
+    renderQuickMonthView(visibleReports, byDateMap, emptyMsg);
+  } else {
+    renderQuickListView(visibleReports, emptyMsg);
   }
 }
 
@@ -790,6 +1273,7 @@ async function openRemoteFile(path, { hashMode = 'push', closeOnMobile = true } 
 
     selectedPath = data.path;
     currentMarkdownText = data.content;
+    syncQuickViewToReport(data.path);
     if (hashMode === 'replace') syncUrlHash(data.path, { replace: true });
     else if (hashMode === 'push') syncUrlHash(data.path, { replace: false });
 
