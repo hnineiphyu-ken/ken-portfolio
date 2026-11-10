@@ -6,8 +6,8 @@
 <title>KEN'S-MD</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #f5f6f8; color: #24292f; }
-.sidebar { width: 320px; height: 100vh; background: #fff; border-right: 1px solid #e1e4e8; overflow: hidden; padding: 0 16px 14px; flex-shrink: 0; display: flex; flex-direction: column; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; height: 100dvh; background: #f5f6f8; color: #24292f; overflow-wrap: anywhere; }
+.sidebar { width: 320px; height: 100vh; height: 100dvh; background: #fff; border-right: 1px solid #e1e4e8; overflow: hidden; padding: 0 16px max(14px, env(safe-area-inset-bottom, 14px)); flex-shrink: 0; display: flex; flex-direction: column; }
 .sidebar-header { position: sticky; top: 0; z-index: 2; background: #fff; padding: 20px 0 4px; box-shadow: 0 8px 12px rgba(255,255,255,.95); }
 .sidebar-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .sidebar h1 { font-size: 18px; color: #24292f; }
@@ -107,12 +107,12 @@ body.sidebar-closed .main { padding: 72px 40px 32px 88px; }
 @media (max-width: 1023px) {
 body { display: block; }
 .menu-btn { display: block; }
-.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(320px, 86vw); transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
+.sidebar { position: fixed; top: 0; left: 0; z-index: 4; width: min(320px, 86vw); height: 100vh; height: 100dvh; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 8px 0 24px rgba(31,35,40,.18); }
 body.sidebar-closed .sidebar { display: flex; }
 body.sidebar-open .sidebar { transform: translateX(0); }
 body.sidebar-open .sidebar-overlay { display: block; }
 body.sidebar-open .menu-btn { display: none; }
-.main { min-height: 100vh; padding: 72px 18px 28px; }
+.main { min-height: 100vh; min-height: 100dvh; padding: 72px 18px 28px; }
 .markdown { padding: 24px 20px; }
 }
 .reader-actions { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -120,26 +120,64 @@ body.sidebar-open .menu-btn { display: none; }
 .logout-link { display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid #d0d7de; border-radius: 6px; color: #57606a; font-size: 13px; text-decoration: none; }
 .logout-link:hover { background: #f6f8fa; color: #cf222e; }
 .repository-name { color: #57606a; font-size: 12px; word-break: break-all; padding: 8px; background: #f6f8fa; border-radius: 6px; }
-.document-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
-.document-path { font-size: 13px; font-weight: 500; color: #57606a; word-break: break-all; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
-.doc-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; font-size: 12px; font-weight: 500; color: #24292f; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; line-height: 1; transition: all .15s ease; user-select: none; flex-shrink: 0; }
+.quick-reports { margin: 10px 0 8px; border: 1px solid #e1e4e8; border-radius: 8px; background: #f6f8fa; flex-shrink: 0; overflow: hidden; }
+.quick-reports[hidden] { display: none; }
+.quick-reports-heading { margin: 0; font-size: 100%; font-weight: inherit; }
+.quick-reports-toggle { width: 100%; border: 0; background: transparent; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; color: #24292f; font-size: 12px; font-weight: 600; text-align: left; }
+.quick-reports-toggle:hover { background: #eaeef2; }
+.quick-reports-title-wrap { display: inline-flex; align-items: center; gap: 6px; min-inline-size: 0; }
+.quick-reports-chevron { display: inline-block; width: 12px; color: #57606a; transition: transform .15s ease; flex-shrink: 0; }
+.quick-reports-toggle[aria-expanded="false"] .quick-reports-chevron { transform: rotate(-90deg); }
+.quick-reports-count { font-size: 11px; font-weight: 600; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 999px; padding: 1px 7px; line-height: 1.4; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.quick-reports-list { list-style: none; max-block-size: min(156px, 24dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 4px 6px 6px; border-top: 1px solid #e1e4e8; background: #fff; display: flex; flex-direction: column; gap: 2px; }
+.quick-reports-list[hidden] { display: none; }
+.quick-date-btn { width: 100%; border: 0; background: transparent; color: #24292f; font-size: 13px; text-align: left; padding: 5px 8px; min-block-size: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; transition: background .15s ease, scale .1s ease; }
+.quick-date-btn:hover { background: #f0f1f3; }
+.quick-date-btn:active { scale: 0.99; }
+.quick-date-btn[aria-current="date"] { background: #0969da; color: #fff; font-weight: 600; }
+.quick-date-main { display: inline-flex; align-items: center; gap: 6px; min-inline-size: 0; }
+.quick-date-iso { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.quick-date-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 999px; line-height: 1.4; text-transform: uppercase; letter-spacing: .02em; }
+.quick-date-badge.is-today { background: #ddf4ff; color: #0969da; }
+.quick-date-badge.is-yesterday { background: #eaeef2; color: #57606a; }
+.quick-date-btn[aria-current="date"] .quick-date-badge { background: rgba(255,255,255,.22); color: #fff; }
+.quick-date-meta { font-size: 11.5px; color: #57606a; white-space: nowrap; flex-shrink: 0; }
+.quick-date-btn[aria-current="date"] .quick-date-meta { color: rgba(255,255,255,.88); }
+.document-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e1e4e8; }
+.document-path { font-size: 13px; font-weight: 500; color: #57606a; word-break: break-all; display: flex; align-items: center; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.document-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex-shrink: 0; }
+.doc-date-nav { display: inline-flex; align-items: center; gap: 4px; }
+.doc-nav-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; min-block-size: 28px; font-size: 12px; font-weight: 500; color: #24292f; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; line-height: 1; transition: all .15s ease; user-select: none; }
+.doc-nav-btn:hover:not([aria-disabled="true"]) { background: #f3f4f6; border-color: #0969da; color: #0969da; }
+.doc-nav-btn:active:not([aria-disabled="true"]) { scale: 0.97; }
+.doc-nav-btn[aria-disabled="true"] { color: #8c959f; background: #f6f8fa; cursor: not-allowed; opacity: .7; }
+.doc-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; min-block-size: 28px; font-size: 12px; font-weight: 500; color: #24292f; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer; line-height: 1; transition: all .15s ease; user-select: none; flex-shrink: 0; }
 .doc-copy-btn:hover { background: #f3f4f6; border-color: #0969da; color: #0969da; }
 .doc-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; font-weight: 600; }
 .doc-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .code-block { position: relative; margin: 0 0 16px; }
 .code-block pre { margin: 0; }
 .code-copy-btn { position: absolute; top: 8px; right: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; font-size: 11px; font-weight: 500; color: #57606a; background: #fff; border: 1px solid #d0d7de; border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s ease, background .15s ease, color .15s ease; user-select: none; line-height: 1; }
-.code-block:hover .code-copy-btn, .code-copy-btn:focus, .code-copy-btn.copied { opacity: 1; }
+.code-block:hover .code-copy-btn, .code-copy-btn:focus-visible, .code-copy-btn.copied { opacity: 1; }
 .code-copy-btn:hover { background: #f3f4f6; color: #0969da; border-color: #0969da; }
 .code-copy-btn.copied { color: #1a7f37; border-color: #1a7f37; background: #dafbe1; }
 .code-copy-btn svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+:where(button, a):focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+@media (hover: none) {
+.file-copy-btn, .code-copy-btn { opacity: 1; }
+}
+@media (pointer: coarse) {
+.quick-reports-toggle { min-block-size: 44px; }
+.quick-date-btn { min-block-size: 44px; padding: 8px 10px; }
+.doc-copy-btn, .doc-nav-btn { min-block-size: 44px; padding: 8px 12px; }
+}
 .loading-row { color: #57606a; font-size: 13px; padding: 10px 8px; }
 </style>
 </head>
 <body>
-<button class="menu-btn" id="menuBtn" type="button" aria-label="Open sidebar">☰</button>
+<button class="menu-btn" id="menuBtn" type="button" aria-label="Open sidebar" aria-controls="sidebar" aria-expanded="false">☰</button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="sidebar-title-row">
       <h1>Hachiware Reader</h1>
@@ -151,6 +189,15 @@ body.sidebar-open .menu-btn { display: none; }
     </div>
     <input class="search-input" id="searchInput" type="search" placeholder="Search Markdown files…" aria-label="Search Markdown files">
     <div class="repository-name" id="repository">Loading private repository…</div>
+  </div>
+  <div class="quick-reports" id="quickReports" hidden>
+    <h2 class="quick-reports-heading">
+      <button class="quick-reports-toggle" id="quickReportsToggle" type="button" aria-expanded="true" aria-controls="quickReportsList">
+        <span class="quick-reports-title-wrap"><span class="quick-reports-chevron" aria-hidden="true">▾</span><span>Daily Reports</span></span>
+        <span class="quick-reports-count" id="quickReportsCount">0</span>
+      </button>
+    </h2>
+    <ul class="quick-reports-list" id="quickReportsList" role="list"></ul>
   </div>
   <ul class="tree" id="tree"></ul>
   <div class="developer-credit">Private · Hachiware</div>

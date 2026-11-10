@@ -8,9 +8,17 @@ const refreshBtn = document.getElementById('refreshBtn');
 const treeEl = document.getElementById('tree');
 const mainEl = document.getElementById('main');
 const repositoryEl = document.getElementById('repository');
+const quickReportsEl = document.getElementById('quickReports');
+const quickReportsToggle = document.getElementById('quickReportsToggle');
+const quickReportsCount = document.getElementById('quickReportsCount');
+const quickReportsList = document.getElementById('quickReportsList');
 let files = [];
+let dailyReports = [];
 let selectedPath = '';
 let mermaidInitialized = false;
+let quickReportsCollapsed = false;
+let activeLoadToken = 0;
+let activeFetchController = null;
 
 let rootManualOrder = [];
 let folderSortDirs = {};
@@ -20,16 +28,137 @@ let draggedRootName = null;
 try {
   rootManualOrder = JSON.parse(localStorage.getItem('my_md_root_order') || '[]');
   folderSortDirs = JSON.parse(localStorage.getItem('my_md_folder_sorts') || '{}');
+  quickReportsCollapsed = localStorage.getItem('my_md_quick_reports_collapsed') === '1';
 } catch {}
 
 let currentMarkdownText = '';
 
+const REPORT_PATH_RE = /^(?:(.+?)\/)?reports\/(?:\d{4}\/)?(\d{4}-\d{2}-\d{2})\.md$/i;
+const SHORT_WEEKDAY_FMT = new Intl.DateTimeFormat('en-US', { weekday: 'short' });
+const SHORT_DATE_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+
+function getTodayAndYesterdayIso() {
+  if (typeof Temporal !== 'undefined') {
+    const today = Temporal.Now.plainDateISO();
+    const yesterday = today.subtract({ days: 1 });
+    return { today: today.toString(), yesterday: yesterday.toString() };
+  }
+  const now = new Date();
+  const toIso = (d) => [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0')
+  ].join('-');
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  return { today: toIso(now), yesterday: toIso(yesterday) };
+}
+
+function formatReportDateMeta(isoDate) {
+  const parts = isoDate.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+  const [year, month, day] = parts;
+  if (typeof Temporal !== 'undefined') {
+    try {
+      const plain = Temporal.PlainDate.from({ year, month, day }, { overflow: 'reject' });
+      return {
+        weekday: plain.toLocaleString('en-US', { weekday: 'short' }),
+        shortDate: plain.toLocaleString('en-US', { month: 'short', day: 'numeric' })
+      };
+    } catch {
+      return null;
+    }
+  }
+  const d = new Date(year, month - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  return {
+    weekday: SHORT_WEEKDAY_FMT.format(d),
+    shortDate: SHORT_DATE_FMT.format(d)
+  };
+}
+
+function extractDailyReports(entries) {
+  const { today, yesterday } = getTodayAndYesterdayIso();
+  const byDate = new Map();
+
+  for (const entry of entries) {
+    const match = entry.path.match(REPORT_PATH_RE);
+    if (!match) continue;
+    const rootScope = (match[1] || '').toLowerCase();
+    const date = match[2];
+    const meta = formatReportDateMeta(date);
+    if (!meta) continue;
+
+    const isHachiwareReport = rootScope === 'hachiware' || rootScope === '';
+    const existing = byDate.get(date);
+    if (!existing || (isHachiwareReport && !existing.isHachiwareReport)) {
+      let badge = '';
+      if (date === today) badge = 'Today';
+      else if (date === yesterday) badge = 'Yesterday';
+
+      byDate.set(date, {
+        date,
+        path: entry.path,
+        weekday: meta.weekday,
+        shortDate: meta.shortDate,
+        badge,
+        isHachiwareReport
+      });
+    }
+  }
+
+  return Array.from(byDate.values()).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function getDefaultFolderSort(path) {
+  return /(?:^|\/)(?:reports|plans)(?:\/|$)/i.test(path) ? 'desc' : 'asc';
+}
+
+function encodeHashPath(filePath) {
+  return '#' + filePath.split('/').map(encodeURIComponent).join('/');
+}
+
+function decodeHashPath(rawHash = window.location.hash) {
+  if (!rawHash || rawHash === '#') return '';
+  const body = rawHash.startsWith('#') ? rawHash.slice(1) : rawHash;
+  if (!body) return '';
+  try {
+    return decodeURIComponent(body).replace(/^\/+/, '');
+  } catch {
+    return '';
+  }
+}
+
+function syncUrlHash(filePath, { replace = false } = {}) {
+  if (!filePath) return;
+  const targetHash = encodeHashPath(filePath);
+  if (window.location.hash === targetHash) return;
+  try {
+    if (replace) {
+      history.replaceState(null, '', targetHash);
+    } else {
+      history.pushState(null, '', targetHash);
+    }
+  } catch {
+    window.location.hash = targetHash;
+  }
+}
+
+function findInitialFilePath(entries, reports, hashPath) {
+  if (!entries.length) return '';
+  if (hashPath) {
+    const exact = entries.find(file => file.path === hashPath);
+    if (exact) return exact.path;
+  }
+  if (reports.length) return reports[0].path;
+  return entries[0].path;
+}
+
 function getCopyIconSvg(size = 14) {
-  return '<svg class="copy-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>';
+  return '<svg class="copy-svg" aria-hidden="true" focusable="false" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path></svg>';
 }
 
 function getCheckIconSvg(size = 14) {
-  return '<svg class="check-svg" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>';
+  return '<svg class="check-svg" aria-hidden="true" focusable="false" viewBox="0 0 16 16" width="' + size + '" height="' + size + '" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>';
 }
 
 async function copyTextToClipboard(text) {
@@ -68,6 +197,14 @@ function showCopiedFeedback(btn, defaultText = '') {
 }
 
 mainEl.addEventListener('click', async (e) => {
+  const navBtn = e.target.closest('.doc-nav-btn');
+  if (navBtn) {
+    e.stopPropagation();
+    if (navBtn.getAttribute('aria-disabled') === 'true') return;
+    const navPath = navBtn.dataset.navPath;
+    if (navPath) await openRemoteFile(navPath);
+    return;
+  }
   const docBtn = e.target.closest('.doc-copy-btn');
   if (docBtn) {
     e.stopPropagation();
@@ -92,22 +229,63 @@ mainEl.addEventListener('click', async (e) => {
 
 function getSortIconSvg(dir) {
   if (dir === 'desc') {
-    return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 13.25a.75.75 0 0 0 1.5 0V5.56l1.72 1.72a.75.75 0 0 0 1.06-1.06l-3-3a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v7.69zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+    return '<svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 13.25a.75.75 0 0 0 1.5 0V5.56l1.72 1.72a.75.75 0 0 0 1.06-1.06l-3-3a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v7.69zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
   }
-  return '<svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 1 1.5 0v7.69l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06l1.72 1.72V2.75zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+  return '<svg aria-hidden="true" focusable="false" viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 1 1.5 0v7.69l1.72-1.72a.75.75 0 1 1 1.06 1.06l-3 3a.75.75 0 0 1-1.06 0l-3-3a.75.75 0 1 1 1.06-1.06l1.72 1.72V2.75zM10.25 3.5h3a.75.75 0 0 1 .58 1.22l-2.07 2.53h1.49a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.58-1.22l2.07-2.53h-1.49a.75.75 0 0 1 0-1.5zm.75 6.5a.75.75 0 0 0-1.5 0v3.25a.75.75 0 0 0 1.5 0V10z"/></svg>';
+}
+
+function syncQuickReportsCollapsed() {
+  if (!quickReportsToggle || !quickReportsList) return;
+  quickReportsToggle.setAttribute('aria-expanded', String(!quickReportsCollapsed));
+  quickReportsList.hidden = quickReportsCollapsed;
+}
+
+if (quickReportsToggle) {
+  syncQuickReportsCollapsed();
+  quickReportsToggle.addEventListener('click', () => {
+    quickReportsCollapsed = !quickReportsCollapsed;
+    try { localStorage.setItem('my_md_quick_reports_collapsed', quickReportsCollapsed ? '1' : '0'); } catch {}
+    syncQuickReportsCollapsed();
+  });
 }
 
 menuBtn.addEventListener('click', () => {
-  document.body.classList.toggle(isDrawerMode() ? 'sidebar-open' : 'sidebar-closed');
+  const drawerMode = isDrawerMode();
+  const opened = document.body.classList.toggle(drawerMode ? 'sidebar-open' : 'sidebar-closed');
   updateMenuButtonLabel();
+  if (drawerMode && opened && sidebarCloseBtn) {
+    sidebarCloseBtn.focus();
+  }
 });
-sidebarCloseBtn.addEventListener('click', closeSidebar);
+sidebarCloseBtn.addEventListener('click', () => {
+  const wasDrawer = isDrawerMode();
+  closeSidebar();
+  if (wasDrawer) menuBtn.focus();
+});
 sidebarOverlay.addEventListener('click', closeSidebar);
 searchInput.addEventListener('input', renderTree);
 refreshBtn.addEventListener('click', loadTree);
 
-async function requestJson(url) {
-  const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+function handleHashNavigation() {
+  const hashPath = decodeHashPath();
+  if (!hashPath || !files.length) return;
+  if (hashPath === selectedPath) return;
+  if (files.some(file => file.path === hashPath)) {
+    openRemoteFile(hashPath, { hashMode: 'none', closeOnMobile: true });
+  }
+}
+
+window.addEventListener('hashchange', handleHashNavigation);
+window.addEventListener('popstate', handleHashNavigation);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && isDrawerMode() && document.body.classList.contains('sidebar-open')) {
+    closeSidebar();
+    menuBtn.focus();
+  }
+});
+
+async function requestJson(url, { signal } = {}) {
+  const response = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' }, signal });
   if (response.status === 401) {
     window.location.assign('/api/auth/login');
     throw new Error('Authentication required.');
@@ -123,9 +301,22 @@ async function loadTree() {
   try {
     const data = await requestJson('/api/markdown/tree');
     files = data.files;
+    dailyReports = extractDailyReports(files);
     repositoryEl.textContent = data.repository + ' · ' + data.branch;
     renderTree();
-    if (!selectedPath && files.length) await openRemoteFile(files[0].path);
+
+    const hashPath = decodeHashPath();
+    const keepCurrent = selectedPath && files.some(file => file.path === selectedPath);
+    const targetPath = keepCurrent ? selectedPath : findInitialFilePath(files, dailyReports, hashPath);
+
+    if (targetPath) {
+      await openRemoteFile(targetPath, {
+        hashMode: keepCurrent ? 'replace' : (hashPath === targetPath ? 'none' : 'replace'),
+        closeOnMobile: false
+      });
+    } else {
+      renderEmpty('<div class="empty">No Markdown files found in this repository.</div>');
+    }
   } catch (error) {
     treeEl.innerHTML = '<li class="error">' + escapeHtml(error.message) + '</li>';
     renderEmpty('<div class="error">' + escapeHtml(error.message) + '</div>');
@@ -134,7 +325,80 @@ async function loadTree() {
   }
 }
 
+function renderQuickReports() {
+  if (!quickReportsEl || !quickReportsList || !quickReportsCount) return;
+  const term = searchInput.value.trim().toLowerCase();
+  const visibleReports = term
+    ? dailyReports.filter(item =>
+        item.date.toLowerCase().includes(term) ||
+        item.path.toLowerCase().includes(term) ||
+        item.weekday.toLowerCase().includes(term) ||
+        item.shortDate.toLowerCase().includes(term) ||
+        item.badge.toLowerCase().includes(term)
+      )
+    : dailyReports;
+
+  if (!dailyReports.length || (term && !visibleReports.length)) {
+    quickReportsEl.hidden = true;
+    quickReportsList.innerHTML = '';
+    quickReportsCount.textContent = '0';
+    return;
+  }
+
+  quickReportsEl.hidden = false;
+  quickReportsCount.textContent = String(visibleReports.length);
+  quickReportsList.innerHTML = '';
+
+  let activeBtn = null;
+  for (const report of visibleReports) {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quick-date-btn';
+    btn.dataset.path = report.path;
+
+    if (report.path === selectedPath) {
+      btn.setAttribute('aria-current', 'date');
+      activeBtn = btn;
+    }
+
+    const labelParts = [report.date];
+    if (report.badge) labelParts.push(report.badge);
+    if (report.weekday || report.shortDate) labelParts.push((report.weekday + ' ' + report.shortDate).trim());
+    btn.setAttribute('aria-label', 'Open report ' + labelParts.join(', '));
+
+    const mainSpan = document.createElement('span');
+    mainSpan.className = 'quick-date-main';
+
+    const isoSpan = document.createElement('span');
+    isoSpan.className = 'quick-date-iso';
+    isoSpan.textContent = report.date;
+    mainSpan.appendChild(isoSpan);
+
+    if (report.badge) {
+      const badgeSpan = document.createElement('span');
+      badgeSpan.className = 'quick-date-badge ' + (report.badge === 'Today' ? 'is-today' : 'is-yesterday');
+      badgeSpan.textContent = report.badge;
+      mainSpan.appendChild(badgeSpan);
+    }
+
+    const metaSpan = document.createElement('span');
+    metaSpan.className = 'quick-date-meta';
+    metaSpan.textContent = report.weekday ? (report.weekday + ' · ' + report.shortDate) : report.shortDate;
+
+    btn.append(mainSpan, metaSpan);
+    btn.addEventListener('click', () => openRemoteFile(report.path));
+    li.appendChild(btn);
+    quickReportsList.appendChild(li);
+  }
+
+  if (activeBtn && !quickReportsCollapsed && typeof activeBtn.scrollIntoView === 'function') {
+    activeBtn.scrollIntoView({ block: 'nearest' });
+  }
+}
+
 function renderTree() {
+  renderQuickReports();
   const term = searchInput.value.trim().toLowerCase();
   const visible = term ? files.filter(file => file.path.toLowerCase().includes(term)) : files;
   treeEl.innerHTML = '';
@@ -158,7 +422,7 @@ function toTree(entries) {
   return root;
 }
 
-function getSortedNames(node, prefix, sortDir = 'asc') {
+function getSortedNames(node, prefix, sortDir = getDefaultFolderSort(prefix)) {
   const names = Object.keys(node).filter(name => name !== '__file');
 
   if (prefix === '') {
@@ -176,11 +440,11 @@ function getSortedNames(node, prefix, sortDir = 'asc') {
     });
   }
 
-  // Folders under main root: alphabet sort (folders first, then files)
+  // Folders under main root: folders first, then files sorted chronologically/alphabetically
   return names.sort((a, b) => {
     const aIsDir = !node[a].__file;
     const bIsDir = !node[b].__file;
-    if (aIsDir !== bIsDir) return aIsDir ? -1 : 1; // folders first
+    if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
 
     return sortDir === 'desc'
       ? b.localeCompare(a, undefined, { numeric: true })
@@ -188,9 +452,9 @@ function getSortedNames(node, prefix, sortDir = 'asc') {
   });
 }
 
-function buildTreeNodes(node, parent, prefix = '', sortDir = 'asc') {
+function buildTreeNodes(node, parent, prefix = '', sortDir = '') {
   const isRoot = prefix === '';
-  const currentSortDir = isRoot ? 'asc' : sortDir;
+  const currentSortDir = isRoot ? 'asc' : (sortDir || getDefaultFolderSort(prefix));
   const sortedNames = getSortedNames(node, prefix, currentSortDir);
 
   for (const name of sortedNames) {
@@ -209,16 +473,22 @@ function buildTreeNodes(node, parent, prefix = '', sortDir = 'asc') {
       row.className = 'file-row';
 
       const link = document.createElement('a');
+      link.href = encodeHashPath(child.__file.path);
       link.textContent = '📄 ' + name;
       link.classList.toggle('active', child.__file.path === selectedPath);
-      link.addEventListener('click', () => openRemoteFile(child.__file.path));
+      link.addEventListener('click', (e) => {
+        if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+          e.preventDefault();
+          openRemoteFile(child.__file.path);
+        }
+      });
       row.appendChild(link);
 
       const copyBtn = document.createElement('button');
       copyBtn.type = 'button';
       copyBtn.className = 'file-copy-btn';
       copyBtn.title = 'Copy file content';
-      copyBtn.setAttribute('aria-label', 'Copy file content');
+      copyBtn.setAttribute('aria-label', 'Copy ' + name + ' content');
       copyBtn.innerHTML = getCopyIconSvg(12);
       copyBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -247,15 +517,17 @@ function buildTreeNodes(node, parent, prefix = '', sortDir = 'asc') {
       folder.textContent = name;
       const isCollapsed = collapsedFolders.has(path);
       folder.classList.toggle('collapsed', isCollapsed);
+      folder.classList.toggle('selected-parent', Boolean(selectedPath) && selectedPath.startsWith(path + '/'));
       folderRow.appendChild(folder);
 
-      // Alphabet sort button on each folder under the main root
-      const thisFolderSort = folderSortDirs[path] || 'asc';
+      // Sort button on each folder under the main root (defaults to descending for reports/ & plans/)
+      const thisFolderSort = folderSortDirs[path] || getDefaultFolderSort(path);
       if (!isRoot) {
         const sortBtn = document.createElement('button');
         sortBtn.type = 'button';
         sortBtn.className = 'row-sort-btn';
         sortBtn.title = 'Sort: ' + (thisFolderSort === 'asc' ? 'A-Z (click for Z-A)' : 'Z-A (click for A-Z)');
+        sortBtn.setAttribute('aria-label', 'Sort ' + name + ': ' + (thisFolderSort === 'asc' ? 'ascending' : 'descending'));
         sortBtn.innerHTML = getSortIconSvg(thisFolderSort) + '<span>' + (thisFolderSort === 'asc' ? 'A-Z' : 'Z-A') + '</span>';
         sortBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -341,25 +613,66 @@ function enableRootDrag(item, name, siblingNames) {
   });
 }
 
-async function openRemoteFile(path) {
+function buildDocumentHeaderHtml(filePath) {
+  const reportIndex = dailyReports.findIndex(item => item.path === filePath);
+  let dateNavHtml = '';
+  if (reportIndex !== -1) {
+    const newer = reportIndex > 0 ? dailyReports[reportIndex - 1] : null;
+    const older = reportIndex < dailyReports.length - 1 ? dailyReports[reportIndex + 1] : null;
+    const prevAttrs = older
+      ? 'data-nav-path="' + escapeHtml(older.path) + '" title="Previous report (' + escapeHtml(older.date) + ')" aria-label="Previous report: ' + escapeHtml(older.date) + '"'
+      : 'aria-disabled="true" title="No older report" aria-label="Previous report unavailable"';
+    const nextAttrs = newer
+      ? 'data-nav-path="' + escapeHtml(newer.path) + '" title="Next report (' + escapeHtml(newer.date) + ')" aria-label="Next report: ' + escapeHtml(newer.date) + '"'
+      : 'aria-disabled="true" title="Already on latest report" aria-label="Next report unavailable"';
+
+    dateNavHtml =
+      '<div class="doc-date-nav" role="group" aria-label="Adjacent daily reports">' +
+        '<button type="button" class="doc-nav-btn" ' + prevAttrs + '><span aria-hidden="true">‹</span> Prev</button>' +
+        '<button type="button" class="doc-nav-btn" ' + nextAttrs + '>Next <span aria-hidden="true">›</span></button>' +
+      '</div>';
+  }
+
+  return '<div class="document-header">' +
+    '<div class="document-path"><span class="doc-icon" aria-hidden="true">📄</span><span class="doc-name">' + escapeHtml(filePath) + '</span></div>' +
+    '<div class="document-actions">' +
+      dateNavHtml +
+      '<button type="button" class="doc-copy-btn" id="docCopyBtn" title="Copy Markdown content" aria-label="Copy Markdown content">' +
+        getCopyIconSvg(14) + '<span>Copy</span>' +
+      '</button>' +
+    '</div>' +
+  '</div>';
+}
+
+async function openRemoteFile(path, { hashMode = 'push', closeOnMobile = true } = {}) {
+  if (activeFetchController) activeFetchController.abort();
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  activeFetchController = controller;
+  const token = ++activeLoadToken;
+
   renderLoading('Loading ' + path + '…');
   try {
-    const data = await requestJson('/api/markdown/file?path=' + encodeURIComponent(path));
+    const data = await requestJson('/api/markdown/file?path=' + encodeURIComponent(path), { signal: controller?.signal });
+    if (token !== activeLoadToken) return;
+    if (activeFetchController === controller) activeFetchController = null;
+
     selectedPath = data.path;
     currentMarkdownText = data.content;
+    if (hashMode === 'replace') syncUrlHash(data.path, { replace: true });
+    else if (hashMode === 'push') syncUrlHash(data.path, { replace: false });
+
+    const fileName = data.path.split('/').pop() || data.path;
+    document.title = fileName + " · KEN'S-MD";
+
     renderTree();
-    mainEl.innerHTML = '<article class="markdown">' +
-      '<div class="document-header">' +
-        '<div class="document-path"><span class="doc-icon">📄</span><span class="doc-name">' + escapeHtml(data.path) + '</span></div>' +
-        '<button type="button" class="doc-copy-btn" id="docCopyBtn" title="Copy Markdown content" aria-label="Copy Markdown content">' +
-          getCopyIconSvg(14) + '<span>Copy</span>' +
-        '</button>' +
-      '</div>' +
-      renderMarkdown(data.content) +
-    '</article>';
+    mainEl.innerHTML = '<article class="markdown">' + buildDocumentHeaderHtml(data.path) + renderMarkdown(data.content) + '</article>';
+    mainEl.scrollTop = 0;
     await renderMermaidDiagrams();
-    if (isDrawerMode()) closeSidebar();
+    if (token !== activeLoadToken) return;
+    if (closeOnMobile && isDrawerMode()) closeSidebar();
   } catch (error) {
+    if (error && error.name === 'AbortError') return;
+    if (token !== activeLoadToken) return;
     renderEmpty('<div class="error">' + escapeHtml(error.message) + '</div>');
   }
 }
@@ -417,7 +730,9 @@ function updateMenuButtonLabel() {
     ? document.body.classList.contains('sidebar-open')
     : !document.body.classList.contains('sidebar-closed');
   menuBtn.setAttribute('aria-label', isOpen ? 'Close sidebar' : 'Open sidebar');
+  menuBtn.setAttribute('aria-expanded', String(isOpen));
 }
+updateMenuButtonLabel();
 
 /* ---- lightweight markdown renderer ---- */
 function escapeHtml(s) {
